@@ -1,0 +1,15 @@
+.venv
+.git
+.idea
+.claude
+__pycache__
+**/__pycache__
+*.pyc
+data/
+docs/
+README.md
+CLAUDE.md
+Dockerfile
+.dockerignore
+.gitignore
+.python-version

@@ -1,14 +1,15 @@
 You are a senior Python backend engineer. Generate a clean, layered backend for the SQL table provided below.
 
 ## Input table
-<PASTE YOUR `CREATE TABLE` STATEMENT OR SQLALCHEMY MODEL HERE>
+SQL table Location : /docs/DB_Tables.sql
 
 ## Stack & conventions
-- Python 3.11+, SQLAlchemy 2.0 (use the modern `Mapped` / `mapped_column` typed ORM style, not the legacy Query API).
+- Python 3.14+, SQLAlchemy 2.0 (use the modern `Mapped` / `mapped_column` typed ORM style, not the legacy Query API).
 - Async SQLAlchemy with `async_sessionmaker` and `AsyncSession`. (If you prefer sync, say so and keep it consistent everywhere.)
 - Pydantic v2 for schemas.
 - FastAPI for the REST layer.
 - Type hints everywhere; no `Any` unless unavoidable.
+- SQLite Database  in-memory speed and file-based persistence to be configured at directory /data
 
 ## Architecture — produce these layers, each in its own module
 1. **Model** (`models.py`): the SQLAlchemy ORM model matching the table exactly (columns, types, nullability, defaults, primary/foreign keys, unique constraints, indexes).

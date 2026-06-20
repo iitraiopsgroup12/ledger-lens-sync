@@ -1,0 +1,65 @@
+"""FastAPI Depends() providers assembling repository -> service per entity."""
+
+from typing import Annotated
+
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_session
+from app.repository import (
+    AnalystReportRepository,
+    ChunkRepository,
+    CompanyRepository,
+    DocumentRepository,
+    UpdateLogRepository,
+    UserRepository,
+    WatchlistRepository,
+)
+from app.service import (
+    AnalystReportService,
+    ChunkService,
+    CompanyService,
+    DocumentService,
+    UpdateLogService,
+    UserService,
+    WatchlistService,
+)
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+def get_user_service(session: SessionDep) -> UserService:
+    return UserService(session, UserRepository(session))
+
+
+def get_company_service(session: SessionDep) -> CompanyService:
+    return CompanyService(session, CompanyRepository(session))
+
+
+def get_watchlist_service(session: SessionDep) -> WatchlistService:
+    return WatchlistService(session, WatchlistRepository(session))
+
+
+def get_document_service(session: SessionDep) -> DocumentService:
+    return DocumentService(session, DocumentRepository(session))
+
+
+def get_chunk_service(session: SessionDep) -> ChunkService:
+    return ChunkService(session, ChunkRepository(session))
+
+
+def get_analyst_report_service(session: SessionDep) -> AnalystReportService:
+    return AnalystReportService(session, AnalystReportRepository(session))
+
+
+def get_update_log_service(session: SessionDep) -> UpdateLogService:
+    return UpdateLogService(session, UpdateLogRepository(session))
+
+
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+CompanyServiceDep = Annotated[CompanyService, Depends(get_company_service)]
+WatchlistServiceDep = Annotated[WatchlistService, Depends(get_watchlist_service)]
+DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
+ChunkServiceDep = Annotated[ChunkService, Depends(get_chunk_service)]
+AnalystReportServiceDep = Annotated[AnalystReportService, Depends(get_analyst_report_service)]
+UpdateLogServiceDep = Annotated[UpdateLogService, Depends(get_update_log_service)]
