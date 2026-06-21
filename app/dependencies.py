@@ -18,6 +18,7 @@ from app.repository import (
 from app.service import (
     AnalystReportService,
     ChunkService,
+    CompanyOnboardService,
     CompanyService,
     DocumentService,
     UpdateLogService,
@@ -56,6 +57,12 @@ def get_update_log_service(session: SessionDep) -> UpdateLogService:
     return UpdateLogService(session, UpdateLogRepository(session))
 
 
+def get_company_onboard_service(
+    company_service: Annotated[CompanyService, Depends(get_company_service)],
+) -> CompanyOnboardService:
+    return CompanyOnboardService(company_service)
+
+
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 CompanyServiceDep = Annotated[CompanyService, Depends(get_company_service)]
 WatchlistServiceDep = Annotated[WatchlistService, Depends(get_watchlist_service)]
@@ -63,3 +70,4 @@ DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
 ChunkServiceDep = Annotated[ChunkService, Depends(get_chunk_service)]
 AnalystReportServiceDep = Annotated[AnalystReportService, Depends(get_analyst_report_service)]
 UpdateLogServiceDep = Annotated[UpdateLogService, Depends(get_update_log_service)]
+CompanyOnboardServiceDep = Annotated[CompanyOnboardService, Depends(get_company_onboard_service)]

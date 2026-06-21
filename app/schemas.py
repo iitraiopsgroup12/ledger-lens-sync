@@ -32,7 +32,7 @@ class UserUpdate(BaseModel):
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: int
     email: str
     full_name: str | None
     role: str
@@ -59,7 +59,7 @@ class CompanyUpdate(BaseModel):
 class CompanyRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: int
     symbol: str
     company_name: str
     sector: str | None
@@ -71,8 +71,8 @@ class CompanyRead(BaseModel):
 
 
 class WatchlistCreate(BaseModel):
-    user_id: str
-    company_id: str
+    user_id: int
+    company_id: int
     frequency: WatchlistFrequency
     status: WatchlistStatus = "active"
 
@@ -86,9 +86,9 @@ class WatchlistUpdate(BaseModel):
 class WatchlistRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    user_id: str
-    company_id: str
+    id: int
+    user_id: int
+    company_id: int
     frequency: str
     last_checked: datetime | None
     status: str
@@ -98,7 +98,7 @@ class WatchlistRead(BaseModel):
 
 
 class DocumentCreate(BaseModel):
-    company_id: str
+    company_id: int
     document_type: DocumentType
     document_title: str | None = None
     report_year: str | None = None
@@ -119,8 +119,8 @@ class DocumentUpdate(BaseModel):
 class DocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    company_id: str
+    id: int
+    company_id: int
     document_type: str
     document_title: str | None
     report_year: str | None
@@ -134,7 +134,7 @@ class DocumentRead(BaseModel):
 
 
 class ChunkCreate(BaseModel):
-    document_id: str
+    document_id: int
     pinecone_namespace: str
     chunk_count: int | None = None
 
@@ -147,8 +147,8 @@ class ChunkUpdate(BaseModel):
 class ChunkRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    document_id: str
+    id: int
+    document_id: int
     pinecone_namespace: str
     chunk_count: int | None
 
@@ -157,7 +157,7 @@ class ChunkRead(BaseModel):
 
 
 class AnalystReportCreate(BaseModel):
-    company_id: str
+    company_id: int
     broker_name: str | None = None
     report_date: date | None = None
     s3_key: str | None = None
@@ -174,8 +174,8 @@ class AnalystReportUpdate(BaseModel):
 class AnalystReportRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    company_id: str
+    id: int
+    company_id: int
     broker_name: str | None
     report_date: date | None
     s3_key: str | None
@@ -186,7 +186,7 @@ class AnalystReportRead(BaseModel):
 
 
 class UpdateLogCreate(BaseModel):
-    company_id: str
+    company_id: int
     update_type: UpdateType | None = None
     status: UpdateStatus | None = None
     message: str | None = None
@@ -201,9 +201,29 @@ class UpdateLogUpdate(BaseModel):
 class UpdateLogRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    company_id: str
+    id: int
+    company_id: int
     update_type: str | None
     status: str | None
     message: str | None
     created_at: datetime
+
+
+# --- Onboarding --------------------------------------------------------------
+
+
+class ChannelDataRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    companyName: str | None
+    Symbol: str | None
+    Subject: str | None
+    Detail: str | None
+    attachment: str | None
+    XBRL: str | None
+    event_date_time: str | None
+    source: str | None
+    sync_date_time: str | None
+    sync_status: str | None
+    attachment_storage_id: str | None
+    xbrl_storage_id: str | None

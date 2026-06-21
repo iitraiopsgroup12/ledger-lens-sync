@@ -1,24 +1,18 @@
 """ORM models matching docs/DB_Tables.sql."""
 
-import uuid
 from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, String, Boolean
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-
-
-def new_uuid() -> str:
-    """Generate a string UUID4 (SQLite has no native UUID type)."""
-    return str(uuid.uuid4())
 
 
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (CheckConstraint("role IN ('analyst', 'admin')", name="ck_users_role"),)
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)
     role: Mapped[str] = mapped_column(String, nullable=False, default="analyst")
@@ -31,7 +25,7 @@ class Company(Base):
     __tablename__ = "companies"
     __table_args__ = ()
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     symbol: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     company_name: Mapped[str] = mapped_column(String, nullable=False)
     sector: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -51,9 +45,9 @@ class Watchlist(Base):
         CheckConstraint("status IN ('active', 'paused')", name="ck_watchlists_status"),
     )
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     frequency: Mapped[str] = mapped_column(String, nullable=False)
     last_checked: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(String, default="active")
@@ -74,8 +68,8 @@ class Document(Base):
         ),
     )
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     document_type: Mapped[str] = mapped_column(String, nullable=False)
     document_title: Mapped[str | None] = mapped_column(String, nullable=True)
     report_year: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -91,8 +85,8 @@ class Document(Base):
 class Chunk(Base):
     __tablename__ = "chunks"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    document_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     pinecone_namespace: Mapped[str] = mapped_column(String, nullable=False)
     chunk_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
@@ -107,8 +101,8 @@ class AnalystReport(Base):
         ),
     )
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     broker_name: Mapped[str | None] = mapped_column(String, nullable=True)
     report_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     s3_key: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -124,11 +118,38 @@ class UpdateLog(Base):
         CheckConstraint("status IN ('success', 'failed', 'skipped')", name="ck_update_logs_status"),
     )
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
-    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
     update_type: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     message: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     company: Mapped["Company"] = relationship(back_populates="update_logs")
+
+
+class NscAnnouncement(Base):
+    __tablename__ = "nsc_announcements"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    seq_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    symbol: Mapped[str] = mapped_column(String, nullable=False)
+    sm_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    sm_isin: Mapped[str | None] = mapped_column(String, nullable=True)
+    sm_industry: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    attchmnt_text: Mapped[str | None] = mapped_column(String, nullable=True)
+    attchmnt_file: Mapped[str | None] = mapped_column(String, nullable=True)
+    att_file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    has_xbrl: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    an_dt: Mapped[str | None] = mapped_column(String, nullable=True)
+    exchdisstime: Mapped[str | None] = mapped_column(String, nullable=True)
+    dt: Mapped[str | None] = mapped_column(String, nullable=True)
+    sort_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    difference: Mapped[str | None] = mapped_column(String, nullable=True)
+    bflag: Mapped[str | None] = mapped_column(String, nullable=True)
+    csv_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    old_new: Mapped[str | None] = mapped_column(String, nullable=True)
+    orgid: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

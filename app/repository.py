@@ -11,7 +11,7 @@ from typing import Generic, TypeVar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AnalystReport, Chunk, Company, Document, UpdateLog, User, Watchlist
+from app.models import AnalystReport, Chunk, Company, Document, NscAnnouncement, UpdateLog, User, Watchlist
 
 ModelType = TypeVar("ModelType")
 
@@ -30,7 +30,7 @@ class BaseRepository(Generic[ModelType]):
         await self._session.flush()
         return instance
 
-    async def get_by_id(self, entity_id: str) -> ModelType | None:
+    async def get_by_id(self, entity_id: int) -> ModelType | None:
         """Fetch a single row by primary key, or None if absent."""
         return await self._session.get(self._model, entity_id)
 
@@ -44,7 +44,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self._session.execute(stmt)
         return result.scalars().all()
 
-    async def update(self, entity_id: str, data: dict) -> ModelType | None:
+    async def update(self, entity_id: int, data: dict) -> ModelType | None:
         """Apply partial updates to an existing row, or return None if absent."""
         instance = await self.get_by_id(entity_id)
         if instance is None:
@@ -54,7 +54,7 @@ class BaseRepository(Generic[ModelType]):
         await self._session.flush()
         return instance
 
-    async def delete(self, entity_id: str) -> bool:
+    async def delete(self, entity_id: int) -> bool:
         """Delete a row by primary key. Returns False if it did not exist."""
         instance = await self.get_by_id(entity_id)
         if instance is None:
@@ -97,3 +97,12 @@ class AnalystReportRepository(BaseRepository[AnalystReport]):
 class UpdateLogRepository(BaseRepository[UpdateLog]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, UpdateLog)
+
+
+class NscAnnouncementRepository(BaseRepository[NscAnnouncement]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session, NscAnnouncement)
+
+    async def get_by_seq_id(self, seq_id: str) -> NscAnnouncement | None:
+        result = await self._session.execute(select(NscAnnouncement).where(NscAnnouncement.seq_id == seq_id))
+        return result.scalar_one_or_none()

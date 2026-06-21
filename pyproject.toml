@@ -8,6 +8,10 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "sqlalchemy>=2.0",
-    "aiosqlite>=0.20",
+    "asyncpg>=0.30",
+    "python-dotenv>=1.0",
     "pydantic[email]>=2.0",
+    "pandas-stubs~=3.0.3",
+    "pandas>=3.0.3",
+    "requests>=2.34.2",
 ]

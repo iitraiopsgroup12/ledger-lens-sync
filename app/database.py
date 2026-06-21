@@ -1,15 +1,24 @@
 """Async SQLAlchemy engine and session setup."""
 
-from pathlib import Path
+import os
 from collections.abc import AsyncGenerator
 
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+load_dotenv()
 
-DATABASE_URL = f"sqlite+aiosqlite:///{DATA_DIR / 'ledger_lens.db'}"
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "root")
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "ledger_lens")
+
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}",
+)
 
 engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=False)
 

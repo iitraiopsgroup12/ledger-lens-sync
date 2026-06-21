@@ -1,0 +1,109 @@
+from datetime import datetime
+from dataclasses import dataclass, fields
+from typing import Optional
+
+import pandas as pd
+
+from nse_data_storage import LocalFileStorage
+
+from .common import BASE_URL, create_nse_session
+from .data_channel import ChannelData, DataChannel
+
+ANNOUNCEMENTS_URL = f"{BASE_URL}/api/corporate-announcements"
+
+
+@dataclass
+class Announcement:
+    an_dt: Optional[str] = None
+    attFileSize: Optional[str] = None
+    attchmntFile: Optional[str] = None
+    attchmntText: Optional[str] = None
+    bflag: Optional[str] = None
+    csvName: Optional[str] = None
+    desc: Optional[str] = None
+    difference: Optional[str] = None
+    dt: Optional[str] = None
+    exchdisstime: Optional[str] = None
+    fileSize: Optional[str] = None
+    hasXbrl: Optional[bool] = None
+    old_new: Optional[str] = None
+    orgid: Optional[str] = None
+    seq_id: Optional[str] = None
+    smIndustry: Optional[str] = None
+    sm_isin: Optional[str] = None
+    sm_name: Optional[str] = None
+    sort_date: Optional[str] = None
+    symbol: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Announcement":
+        known_fields = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in known_fields})
+
+
+class AnnouncementClient(DataChannel):
+    """Client for the NSE India corporate-announcements API."""
+
+    def __init__(self):
+        self.session = create_nse_session()
+        self.storage = LocalFileStorage()
+
+    def get_announcements(
+        self,
+        symbol: str,
+        from_date: str,
+        to_date: str,
+        index: str = "equities",
+        issuer: Optional[str] = None,
+        reqXbrl: bool = False,
+    ) -> list[Announcement]:
+        params = {
+            "index": index,
+            "from_date": from_date,
+            "to_date": to_date,
+            "symbol": symbol,
+            "reqXbrl": str(reqXbrl).lower(),
+        }
+        if issuer:
+            params["issuer"] = issuer
+
+        response = self.session.get(ANNOUNCEMENTS_URL, params=params, timeout=10)
+        response.raise_for_status()
+        return [Announcement.from_dict(item) for item in response.json()]
+
+    def get_announcements_df(self, **kwargs) -> pd.DataFrame:
+        announcements = self.get_announcements(**kwargs)
+        return pd.DataFrame(a.__dict__ for a in announcements)
+
+    def  get_data(self, company_symbol: str, start_date: str) -> list[ChannelData]:
+        to_date = datetime.now().strftime("%d-%m-%Y")
+        announcements = self.get_announcements(
+            symbol=company_symbol, from_date=start_date, to_date=to_date
+        )
+        xbrl_announcements = self.get_announcements(
+            symbol=company_symbol, from_date=start_date, to_date=to_date, reqXbrl=True
+        )
+        xbrl_url_by_seq_id = {a.seq_id: a.attchmntFile for a in xbrl_announcements}
+
+        result = []
+        for a in announcements:
+            xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
+            attachment_storage_id = self.storage.store(a.attchmntFile) if a.attchmntFile else None
+            xbrl_storage_id = self.storage.store(xbrl_url) if xbrl_url else None
+            result.append(
+                ChannelData(
+                    companyName=a.sm_name,
+                    Symbol=a.symbol,
+                    Subject=a.desc,
+                    Detail=a.attchmntText,
+                    attachment=a.attchmntFile,
+                    XBRL=xbrl_url,
+                    event_date_time=a.an_dt,
+                    source="NSE_CORPORATE_ANNOUNCEMENT",
+                    sync_date_time=a.exchdisstime,
+                    sync_status="SUCCESS",
+                    attachment_storage_id=attachment_storage_id,
+                    xbrl_storage_id=xbrl_storage_id,
+                )
+            )
+        return result
