@@ -4,6 +4,7 @@ from typing import Optional
 
 import pandas as pd
 
+from app.models import Company
 from nse_data_storage import LocalFileStorage
 
 from .common import BASE_URL, create_nse_session
@@ -47,6 +48,7 @@ class AnnouncementClient(DataChannel):
     def __init__(self):
         self.session = create_nse_session()
         self.storage = LocalFileStorage()
+        self.documents: list[dict] = []
 
     def get_announcements(
         self,
@@ -75,7 +77,8 @@ class AnnouncementClient(DataChannel):
         announcements = self.get_announcements(**kwargs)
         return pd.DataFrame(a.__dict__ for a in announcements)
 
-    def  get_data(self, company_symbol: str, start_date: str) -> list[ChannelData]:
+    def get_data(self, company: Company, start_date: str) -> list[ChannelData]:
+        company_symbol = company.symbol
         to_date = datetime.now().strftime("%d-%m-%Y")
         announcements = self.get_announcements(
             symbol=company_symbol, from_date=start_date, to_date=to_date
@@ -86,10 +89,23 @@ class AnnouncementClient(DataChannel):
         xbrl_url_by_seq_id = {a.seq_id: a.attchmntFile for a in xbrl_announcements}
 
         result = []
+        documents = []
         for a in announcements:
             xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
             attachment_storage_id = self.storage.store(a.attchmntFile) if a.attchmntFile else None
             xbrl_storage_id = self.storage.store(xbrl_url) if xbrl_url else None
+            documents.append(
+                {
+                    "company_id": company.id,
+                    "document_type": "announcement",
+                    "document_title": a.desc,
+                    "report_year": a.an_dt,
+                    "s3_key": attachment_storage_id,
+                    "source": "NSE_CORPORATE_ANNOUNCEMENT",
+                    "upload_date": datetime.utcnow(),
+                    "processing_status": "completed",
+                }
+            )
             result.append(
                 ChannelData(
                     companyName=a.sm_name,
@@ -106,4 +122,5 @@ class AnnouncementClient(DataChannel):
                     xbrl_storage_id=xbrl_storage_id,
                 )
             )
+        self.documents = documents
         return result

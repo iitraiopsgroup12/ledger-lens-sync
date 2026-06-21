@@ -4,6 +4,7 @@ from typing import Optional
 
 import pandas as pd
 
+from app.models import Company
 from nse_data_storage import LocalFileStorage
 
 from .common import BASE_URL, create_nse_session
@@ -57,7 +58,8 @@ class AnnualReportClient(DataChannel):
         annual_reports = self.fetch_annual_report(**kwargs)
         return pd.DataFrame(r.__dict__ for r in annual_reports)
 
-    def get_data(self, company_symbol: str, start_date: str) -> list[ChannelData]:
+    def get_data(self, company: Company, start_date: str) -> list[ChannelData]:
+        company_symbol = company.symbol
         start = datetime.strptime(start_date, "%d-%m-%Y")
         annual_reports = self.fetch_annual_report(symbol=company_symbol)
 

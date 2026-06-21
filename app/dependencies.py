@@ -59,8 +59,9 @@ def get_update_log_service(session: SessionDep) -> UpdateLogService:
 
 def get_company_onboard_service(
     company_service: Annotated[CompanyService, Depends(get_company_service)],
+    document_service: Annotated[DocumentService, Depends(get_document_service)],
 ) -> CompanyOnboardService:
-    return CompanyOnboardService(company_service)
+    return CompanyOnboardService(company_service, document_service)
 
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]

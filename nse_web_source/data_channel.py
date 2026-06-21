@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
+from app.models import Company
+
 
 @dataclass
 class ChannelData:
@@ -23,5 +25,5 @@ class DataChannel(ABC):
     """Common interface for NSE data sources that yield normalized ChannelData."""
 
     @abstractmethod
-    def get_data(self, company_symbol: str, start_date: str) -> list[ChannelData]:
+    def get_data(self, company: Company, start_date: str) -> list[ChannelData]:
         ...

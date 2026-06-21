@@ -163,17 +163,21 @@ class CompanyOnboardService:
     def __init__(
         self,
         company_service: CompanyService,
+        document_service: DocumentService,
         channels: tuple[DataChannel, ...] | None = None,
     ) -> None:
         self._company_service = company_service
+        self._document_service = document_service
         self._channels = channels or (AnnouncementClient(), AnnualReportClient())
 
     async def on_board(self, company_symbol: str) -> list[ChannelData]:
-        await self._save_company(company_symbol)
+        company = await self._save_company(company_symbol)
 
         result: list[ChannelData] = []
         for channel in self._channels:
-            result.extend(channel.get_data(company_symbol, self.EARLIEST_START_DATE))
+            result.extend(channel.get_data(company, self.EARLIEST_START_DATE))
+            for document_data in getattr(channel, "documents", []):
+                await self._document_service.create(document_data)
         return result
 
     async def _save_company(self, company_symbol: str) -> Company:
