@@ -204,7 +204,7 @@ class CompanyOnboardService:
         self._annual_report_record_service = annual_report_record_service
         self._channels = channels or (AnnouncementClient(), AnnualReportClient())
 
-    async def on_board(self, company_symbol: str) -> list[ChannelData]:
+    async def on_board(self, company_symbol: str  ) -> list[ChannelData]:
         company = await self._save_company(company_symbol)
 
         result: list[ChannelData] = []
