@@ -8,19 +8,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.repository import (
     AnalystReportRepository,
+    AnnualReportRecordRepository,
     ChunkRepository,
     CompanyRepository,
     DocumentRepository,
+    NscAnnouncementRepository,
     UpdateLogRepository,
     UserRepository,
     WatchlistRepository,
 )
 from app.service import (
     AnalystReportService,
+    AnnualReportRecordService,
     ChunkService,
     CompanyOnboardService,
     CompanyService,
     DocumentService,
+    NscAnnouncementService,
     UpdateLogService,
     UserService,
     WatchlistService,
@@ -57,11 +61,23 @@ def get_update_log_service(session: SessionDep) -> UpdateLogService:
     return UpdateLogService(session, UpdateLogRepository(session))
 
 
+def get_nsc_announcement_service(session: SessionDep) -> NscAnnouncementService:
+    return NscAnnouncementService(session, NscAnnouncementRepository(session))
+
+
+def get_annual_report_record_service(session: SessionDep) -> AnnualReportRecordService:
+    return AnnualReportRecordService(session, AnnualReportRecordRepository(session))
+
+
 def get_company_onboard_service(
     company_service: Annotated[CompanyService, Depends(get_company_service)],
     document_service: Annotated[DocumentService, Depends(get_document_service)],
+    nsc_announcement_service: Annotated[NscAnnouncementService, Depends(get_nsc_announcement_service)],
+    annual_report_record_service: Annotated[AnnualReportRecordService, Depends(get_annual_report_record_service)],
 ) -> CompanyOnboardService:
-    return CompanyOnboardService(company_service, document_service)
+    return CompanyOnboardService(
+        company_service, document_service, nsc_announcement_service, annual_report_record_service
+    )
 
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
@@ -71,4 +87,6 @@ DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
 ChunkServiceDep = Annotated[ChunkService, Depends(get_chunk_service)]
 AnalystReportServiceDep = Annotated[AnalystReportService, Depends(get_analyst_report_service)]
 UpdateLogServiceDep = Annotated[UpdateLogService, Depends(get_update_log_service)]
+NscAnnouncementServiceDep = Annotated[NscAnnouncementService, Depends(get_nsc_announcement_service)]
+AnnualReportRecordServiceDep = Annotated[AnnualReportRecordService, Depends(get_annual_report_record_service)]
 CompanyOnboardServiceDep = Annotated[CompanyOnboardService, Depends(get_company_onboard_service)]

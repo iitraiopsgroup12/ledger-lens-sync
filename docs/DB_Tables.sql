@@ -1,7 +1,7 @@
 -- 1. Users Table
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
     full_name TEXT,
     role TEXT DEFAULT 'analyst' CHECK (role IN ('analyst', 'admin')),
     created_at TIMESTAMP DEFAULT NOW()
@@ -10,8 +10,8 @@ CREATE TABLE users (
 -- 2. Companies Table
 CREATE TABLE companies (
     id BIGSERIAL PRIMARY KEY,
-    symbol TEXT UNIQUE NOT NULL,
-    company_name TEXT NOT NULL,
+    symbol TEXT UNIQUE,
+    company_name TEXT,
     sector TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW()
@@ -20,9 +20,9 @@ CREATE TABLE companies (
 -- 3. Watchlists Table
 CREATE TABLE watchlists (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly')),
+    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
+    frequency TEXT CHECK (frequency IN ('daily', 'weekly')),
     last_checked TIMESTAMP,
     status TEXT DEFAULT 'active' CHECK (status IN ('active', 'paused'))
 );
@@ -30,8 +30,8 @@ CREATE TABLE watchlists (
 -- 4. Documents Table
 CREATE TABLE documents (
     id BIGSERIAL PRIMARY KEY,
-    company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    document_type TEXT NOT NULL CHECK (document_type IN ('annual_report', 'announcement', 'other')),
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
+    document_type TEXT CHECK (document_type IN ('annual_report', 'announcement', 'other')),
     document_title TEXT,
     report_year TEXT,
     s3_key TEXT,
@@ -43,15 +43,15 @@ CREATE TABLE documents (
 -- 5. Chunks Table
 CREATE TABLE chunks (
     id BIGSERIAL PRIMARY KEY,
-    document_id BIGINT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    pinecone_namespace TEXT NOT NULL,
+    document_id BIGINT REFERENCES documents(id) ON DELETE CASCADE,
+    pinecone_namespace TEXT,
     chunk_count INT
 );
 
 -- 6. Analyst Reports Table
 CREATE TABLE analyst_reports (
     id BIGSERIAL PRIMARY KEY,
-    company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
     broker_name TEXT,
     report_date DATE,
     s3_key TEXT,
@@ -61,18 +61,35 @@ CREATE TABLE analyst_reports (
 -- 7. Update Logs Table
 CREATE TABLE update_logs (
     id BIGSERIAL PRIMARY KEY,
-    company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
     update_type TEXT CHECK (update_type IN ('mcp_refresh', 'rag_process', 'manual')),
     status TEXT CHECK (status IN ('success', 'failed', 'skipped')),
     message TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 8. NSE Corporate Announcements Table
+-- 8. Annual Reports Table
+CREATE TABLE annual_reports (
+    id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
+    symbol TEXT,
+    company_name TEXT,
+    from_yr TEXT,
+    to_yr TEXT,
+    submission_type TEXT,
+    broadcast_dttm TEXT,
+    dissemination_date_time TEXT,
+    time_taken TEXT,
+    file_name TEXT UNIQUE,
+    att_file_size TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 9. NSE Corporate Announcements Table
 CREATE TABLE nsc_announcements (
     id BIGSERIAL PRIMARY KEY,
-    seq_id TEXT UNIQUE NOT NULL,
-    symbol TEXT NOT NULL,
+    seq_id TEXT UNIQUE,
+    symbol TEXT,
     sm_name TEXT,
     sm_isin TEXT,
     sm_industry TEXT,

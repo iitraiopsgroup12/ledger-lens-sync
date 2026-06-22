@@ -11,7 +11,17 @@ from typing import Generic, TypeVar
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AnalystReport, Chunk, Company, Document, NscAnnouncement, UpdateLog, User, Watchlist
+from app.models import (
+    AnalystReport,
+    AnnualReportRecord,
+    Chunk,
+    Company,
+    Document,
+    NscAnnouncement,
+    UpdateLog,
+    User,
+    Watchlist,
+)
 
 ModelType = TypeVar("ModelType")
 
@@ -73,6 +83,10 @@ class CompanyRepository(BaseRepository[Company]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Company)
 
+    async def get_by_symbol(self, symbol: str) -> Company | None:
+        result = await self._session.execute(select(Company).where(Company.symbol == symbol))
+        return result.scalar_one_or_none()
+
 
 class WatchlistRepository(BaseRepository[Watchlist]):
     def __init__(self, session: AsyncSession) -> None:
@@ -105,4 +119,15 @@ class NscAnnouncementRepository(BaseRepository[NscAnnouncement]):
 
     async def get_by_seq_id(self, seq_id: str) -> NscAnnouncement | None:
         result = await self._session.execute(select(NscAnnouncement).where(NscAnnouncement.seq_id == seq_id))
+        return result.scalar_one_or_none()
+
+
+class AnnualReportRecordRepository(BaseRepository[AnnualReportRecord]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session, AnnualReportRecord)
+
+    async def get_by_file_name(self, file_name: str) -> AnnualReportRecord | None:
+        result = await self._session.execute(
+            select(AnnualReportRecord).where(AnnualReportRecord.file_name == file_name)
+        )
         return result.scalar_one_or_none()

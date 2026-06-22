@@ -13,10 +13,10 @@ class User(Base):
     __table_args__ = (CheckConstraint("role IN ('analyst', 'admin')", name="ck_users_role"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    email: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)
-    role: Mapped[str] = mapped_column(String, nullable=False, default="analyst")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    role: Mapped[str | None] = mapped_column(String, nullable=True, default="analyst")
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
 
     watchlists: Mapped[list["Watchlist"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
@@ -26,16 +26,17 @@ class Company(Base):
     __table_args__ = ()
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    symbol: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    company_name: Mapped[str] = mapped_column(String, nullable=False)
+    symbol: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String, nullable=True)
     sector: Mapped[str | None] = mapped_column(String, nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    is_active: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
 
     watchlists: Mapped[list["Watchlist"]] = relationship(back_populates="company", cascade="all, delete-orphan")
     documents: Mapped[list["Document"]] = relationship(back_populates="company", cascade="all, delete-orphan")
     analyst_reports: Mapped[list["AnalystReport"]] = relationship(back_populates="company", cascade="all, delete-orphan")
     update_logs: Mapped[list["UpdateLog"]] = relationship(back_populates="company", cascade="all, delete-orphan")
+    annual_reports: Mapped[list["AnnualReportRecord"]] = relationship(back_populates="company", cascade="all, delete-orphan")
 
 
 class Watchlist(Base):
@@ -46,11 +47,11 @@ class Watchlist(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
-    frequency: Mapped[str] = mapped_column(String, nullable=False)
+    user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
+    frequency: Mapped[str | None] = mapped_column(String, nullable=True)
     last_checked: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column(String, default="active")
+    status: Mapped[str | None] = mapped_column(String, default="active", nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="watchlists")
     company: Mapped["Company"] = relationship(back_populates="watchlists")
@@ -69,14 +70,14 @@ class Document(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
-    document_type: Mapped[str] = mapped_column(String, nullable=False)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
+    document_type: Mapped[str | None] = mapped_column(String, nullable=True)
     document_title: Mapped[str | None] = mapped_column(String, nullable=True)
     report_year: Mapped[str | None] = mapped_column(String, nullable=True)
     s3_key: Mapped[str | None] = mapped_column(String, nullable=True)
     source: Mapped[str | None] = mapped_column(String, nullable=True)
-    upload_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    processing_status: Mapped[str] = mapped_column(String, default="pending")
+    upload_date: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
+    processing_status: Mapped[str | None] = mapped_column(String, default="pending", nullable=True)
 
     company: Mapped["Company"] = relationship(back_populates="documents")
     chunks: Mapped[list["Chunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
@@ -86,8 +87,8 @@ class Chunk(Base):
     __tablename__ = "chunks"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    document_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
-    pinecone_namespace: Mapped[str] = mapped_column(String, nullable=False)
+    document_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("documents.id", ondelete="CASCADE"), nullable=True)
+    pinecone_namespace: Mapped[str | None] = mapped_column(String, nullable=True)
     chunk_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     document: Mapped["Document"] = relationship(back_populates="chunks")
@@ -102,7 +103,7 @@ class AnalystReport(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
     broker_name: Mapped[str | None] = mapped_column(String, nullable=True)
     report_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     s3_key: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -119,21 +120,41 @@ class UpdateLog(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    company_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
     update_type: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     message: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
 
     company: Mapped["Company"] = relationship(back_populates="update_logs")
+
+
+class AnnualReportRecord(Base):
+    __tablename__ = "annual_reports"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
+    symbol: Mapped[str | None] = mapped_column(String, nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    from_yr: Mapped[str | None] = mapped_column(String, nullable=True)
+    to_yr: Mapped[str | None] = mapped_column(String, nullable=True)
+    submission_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    broadcast_dttm: Mapped[str | None] = mapped_column(String, nullable=True)
+    dissemination_date_time: Mapped[str | None] = mapped_column(String, nullable=True)
+    time_taken: Mapped[str | None] = mapped_column(String, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    att_file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
+
+    company: Mapped["Company"] = relationship(back_populates="annual_reports")
 
 
 class NscAnnouncement(Base):
     __tablename__ = "nsc_announcements"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    seq_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    symbol: Mapped[str] = mapped_column(String, nullable=False)
+    seq_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    symbol: Mapped[str | None] = mapped_column(String, nullable=True)
     sm_name: Mapped[str | None] = mapped_column(String, nullable=True)
     sm_isin: Mapped[str | None] = mapped_column(String, nullable=True)
     sm_industry: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -152,4 +173,4 @@ class NscAnnouncement(Base):
     csv_name: Mapped[str | None] = mapped_column(String, nullable=True)
     old_new: Mapped[str | None] = mapped_column(String, nullable=True)
     orgid: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)

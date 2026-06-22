@@ -38,6 +38,8 @@ class AnnualReportClient(DataChannel):
     def __init__(self):
         self.session = create_nse_session()
         self.storage = LocalFileStorage()
+        self.documents: list[dict] = []
+        self.annual_reports: list[dict] = []
 
     def fetch_annual_report(
         self,
@@ -64,6 +66,8 @@ class AnnualReportClient(DataChannel):
         annual_reports = self.fetch_annual_report(symbol=company_symbol)
 
         result = []
+        documents = []
+        annual_report_records = []
         for r in annual_reports:
             try:
                 event_dt = datetime.strptime(r.broadcast_dttm, BROADCAST_DTTM_FORMAT)
@@ -72,6 +76,33 @@ class AnnualReportClient(DataChannel):
             if event_dt < start:
                 continue
             attachment_storage_id = self.storage.store(r.fileName) if r.fileName else None
+            documents.append(
+                {
+                    "company_id": company.id,
+                    "document_type": "annual_report",
+                    "document_title": f"Annual Report {r.fromYr}-{r.toYr}",
+                    "report_year": f"{r.fromYr}-{r.toYr}",
+                    "s3_key": attachment_storage_id,
+                    "source": "NSE_ANNUAL_REPORT",
+                    "upload_date": datetime.utcnow(),
+                    "processing_status": "completed",
+                }
+            )
+            annual_report_records.append(
+                {
+                    "company_id": company.id,
+                    "symbol": company_symbol,
+                    "company_name": r.companyName,
+                    "from_yr": r.fromYr,
+                    "to_yr": r.toYr,
+                    "submission_type": r.submission_type,
+                    "broadcast_dttm": r.broadcast_dttm,
+                    "dissemination_date_time": r.disseminationDateTime,
+                    "time_taken": r.timeTaken,
+                    "file_name": r.fileName,
+                    "att_file_size": r.attFileSize,
+                }
+            )
             result.append(
                 ChannelData(
                     companyName=r.companyName,
@@ -88,4 +119,6 @@ class AnnualReportClient(DataChannel):
                     xbrl_storage_id=None,
                 )
             )
+        self.documents = documents
+        self.annual_reports = annual_report_records
         return result
