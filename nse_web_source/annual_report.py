@@ -75,7 +75,7 @@ class AnnualReportClient(DataChannel):
                 continue
             if event_dt < start:
                 continue
-            attachment_storage_id = self.storage.store(r.fileName) if r.fileName else None
+            attachment_storage_id = self.storage.store(r.fileName, company_symbol) if r.fileName else None
             documents.append(
                 {
                     "company_id": company.id,

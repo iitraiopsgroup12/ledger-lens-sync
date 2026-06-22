@@ -97,8 +97,8 @@ class AnnouncementClient(DataChannel):
                 xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
                 attachment_url = a.attchmntFile if a.attchmntFile and a.attchmntFile != "-" else None
                 xbrl_url = xbrl_url if xbrl_url and xbrl_url != "-" else None
-                attachment_storage_id = self.storage.store(attachment_url) if attachment_url else None
-                xbrl_storage_id = self.storage.store(xbrl_url) if xbrl_url else None
+                attachment_storage_id = self.storage.store(attachment_url, company.symbol) if attachment_url else None
+                xbrl_storage_id = self.storage.store(xbrl_url, company.symbol) if xbrl_url else None
                 documents.append(
                     {
                         "company_id": company.id,

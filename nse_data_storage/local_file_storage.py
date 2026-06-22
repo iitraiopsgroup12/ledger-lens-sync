@@ -22,13 +22,18 @@ class LocalFileStorage(DataStorage):
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
-    def store(self, url: str) -> str:
+    def store(self, url: str, bucket: str | None) -> str:
         response = requests.get(url, headers=HEADERS, timeout=30)
         response.raise_for_status()
 
+        target_dir = self.storage_dir
+        if bucket is not None:
+            target_dir = target_dir / bucket
+            target_dir.mkdir(parents=True, exist_ok=True)
+
         file_id = uuid.uuid4().hex
         suffix = Path(urlparse(url).path).suffix
-        file_path = self.storage_dir / f"{file_id}{suffix}"
+        file_path = target_dir / f"{file_id}{suffix}"
         file_path.write_bytes(response.content)
 
         return "file://" + file_id
