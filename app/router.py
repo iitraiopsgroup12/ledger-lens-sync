@@ -43,7 +43,6 @@ from app.schemas import (
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
-
 @users_router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(payload: UserCreate, service: UserServiceDep) -> UserRead:
     user = await service.create(payload.model_dump())
@@ -303,10 +302,9 @@ onboard_router = APIRouter(tags=["onboard"])
 
 
 @onboard_router.get("/onboard", response_model=list[ChannelDataRead])
-async def onboard_company(symbol: str, service: CompanyOnboardServiceDep) -> list[ChannelDataRead]:
-    channel_data = await service.on_board(symbol)
+async def onboard_company(symbol: str, user_id: int, service: CompanyOnboardServiceDep) -> list[ChannelDataRead]:
+    channel_data = await service.on_board(symbol, user_id)
     return [ChannelDataRead.model_validate(d) for d in channel_data]
-
 
 all_routers = (
     users_router,

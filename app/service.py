@@ -196,16 +196,27 @@ class CompanyOnboardService:
         document_service: DocumentService,
         nsc_announcement_service: NscAnnouncementService,
         annual_report_record_service: AnnualReportRecordService,
+        watchlist_service: WatchlistService,
         channels: tuple[DataChannel, ...] | None = None,
     ) -> None:
         self._company_service = company_service
         self._document_service = document_service
         self._nsc_announcement_service = nsc_announcement_service
         self._annual_report_record_service = annual_report_record_service
+        self._watchlist_service = watchlist_service
         self._channels = channels or (AnnouncementClient(), AnnualReportClient())
 
-    async def on_board(self, company_symbol: str  ) -> list[ChannelData]:
+    async def on_board(self, company_symbol: str, user_id: int) -> list[ChannelData]:
         company = await self._save_company(company_symbol)
+        await self._watchlist_service.create(
+            {
+                "user_id": user_id,
+                "company_id": company.id,
+                "frequency": "daily",
+                "last_checked": datetime.utcnow(),
+                "status": "active",
+            }
+        )
 
         result: list[ChannelData] = []
         for channel in self._channels:

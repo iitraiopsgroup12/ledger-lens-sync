@@ -74,9 +74,14 @@ def get_company_onboard_service(
     document_service: Annotated[DocumentService, Depends(get_document_service)],
     nsc_announcement_service: Annotated[NscAnnouncementService, Depends(get_nsc_announcement_service)],
     annual_report_record_service: Annotated[AnnualReportRecordService, Depends(get_annual_report_record_service)],
+    watchlist_service: Annotated[WatchlistService, Depends(get_watchlist_service)],
 ) -> CompanyOnboardService:
     return CompanyOnboardService(
-        company_service, document_service, nsc_announcement_service, annual_report_record_service
+        company_service,
+        document_service,
+        nsc_announcement_service,
+        annual_report_record_service,
+        watchlist_service,
     )
 
 
