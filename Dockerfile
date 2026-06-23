@@ -14,6 +14,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-install-project --no-dev
 
 COPY app/ app/
+COPY nse_data_storage/ nse_data_storage/
+COPY nse_web_source/ nse_web_source/
 COPY main.py ./
 RUN uv sync --locked --no-dev
 
@@ -26,12 +28,14 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/app /app/app
+COPY --from=builder /app/nse_data_storage /app/nse_data_storage
+COPY --from=builder /app/nse_web_source /app/nse_web_source
 COPY --from=builder /app/main.py /app/main.py
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 
-RUN mkdir -p /app/data && chown -R app:app /app/data
+RUN mkdir -p /app/data /app/storage && chown -R app:app /app/data /app/storage
 
 USER app
 

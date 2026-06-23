@@ -6,3 +6,4 @@ python-dotenv==1.2.2
 pydantic[email]==2.13.4
 pandas==3.0.3
 requests==2.34.2
+bcrypt==5.0.0

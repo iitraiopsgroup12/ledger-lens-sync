@@ -14,6 +14,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     email: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)
     role: Mapped[str | None] = mapped_column(String, nullable=True, default="analyst")
     created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)

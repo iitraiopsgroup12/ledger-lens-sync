@@ -2,6 +2,7 @@
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     email TEXT UNIQUE,
+    password_hash TEXT,
     full_name TEXT,
     role TEXT DEFAULT 'analyst' CHECK (role IN ('analyst', 'admin')),
     created_at TIMESTAMP DEFAULT NOW()

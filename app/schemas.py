@@ -19,12 +19,14 @@ UpdateStatus = Literal["success", "failed", "skipped"]
 
 class UserCreate(BaseModel):
     email: EmailStr
+    password: str = Field(min_length=8, max_length=72)
     full_name: str | None = None
     role: UserRole = "analyst"
 
 
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=72)
     full_name: str | None = None
     role: UserRole | None = None
 

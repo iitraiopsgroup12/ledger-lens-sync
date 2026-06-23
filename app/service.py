@@ -39,6 +39,7 @@ from app.repository import (
     UserRepository,
     WatchlistRepository,
 )
+from app.security import hash_password
 from nse_web_source.announcement import AnnouncementClient
 from nse_web_source.annual_report import AnnualReportClient
 from nse_web_source.common import BASE_URL, create_nse_session
@@ -104,7 +105,15 @@ class UserService(BaseService[User]):
         existing = await self._session.execute(select(User).where(User.email == data["email"]))
         if existing.scalar_one_or_none() is not None:
             raise ConflictError(f"User with email '{data['email']}' already exists")
+        password = data.pop("password")
+        data["password_hash"] = hash_password(password)
         return await super().create(data)
+
+    async def update(self, entity_id: int, data: dict) -> User:
+        password = data.pop("password", None)
+        if password is not None:
+            data["password_hash"] = hash_password(password)
+        return await super().update(entity_id, data)
 
 
 class CompanyService(BaseService[Company]):
