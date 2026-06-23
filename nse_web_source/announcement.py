@@ -93,64 +93,64 @@ class AnnouncementClient(DataChannel):
         documents = []
         nsc_announcements = []
         for a in announcements:
-            if a.desc == "Audited quarterly results":
-                xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
-                attachment_url = a.attchmntFile if a.attchmntFile and a.attchmntFile != "-" else None
-                xbrl_url = xbrl_url if xbrl_url and xbrl_url != "-" else None
-                attachment_storage_id = self.storage.store(attachment_url, company.symbol) if attachment_url else None
-                xbrl_storage_id = self.storage.store(xbrl_url, company.symbol) if xbrl_url else None
-                documents.append(
-                    {
-                        "company_id": company.id,
-                        "document_type": "announcement",
-                        "document_title": a.desc,
-                        "report_year": a.an_dt,
-                        "s3_key": attachment_storage_id,
-                        "source": "NSE_CORPORATE_ANNOUNCEMENT",
-                        "upload_date": datetime.utcnow(),
-                        "processing_status": "completed",
-                    }
+
+            xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
+            attachment_url = a.attchmntFile if a.attchmntFile and a.attchmntFile != "-" else None
+            xbrl_url = xbrl_url if xbrl_url and xbrl_url != "-" else None
+            attachment_storage_id = self.storage.store(attachment_url, company.symbol) if attachment_url else None
+            xbrl_storage_id = self.storage.store(xbrl_url, company.symbol) if xbrl_url else None
+            documents.append(
+                {
+                    "company_id": company.id,
+                    "document_type": "announcement",
+                    "document_title": a.desc,
+                    "report_year": a.an_dt,
+                    "s3_key": attachment_storage_id,
+                    "source": "NSE_CORPORATE_ANNOUNCEMENT",
+                    "upload_date": datetime.utcnow(),
+                    "processing_status": "completed",
+                }
+            )
+            nsc_announcements.append(
+                {
+                    "seq_id": a.seq_id,
+                    "symbol": a.symbol,
+                    "sm_name": a.sm_name,
+                    "sm_isin": a.sm_isin,
+                    "sm_industry": a.smIndustry,
+                    "description": a.desc,
+                    "attchmnt_text": a.attchmntText,
+                    "attchmnt_file": a.attchmntFile,
+                    "att_file_size": a.attFileSize,
+                    "file_size": a.fileSize,
+                    "has_xbrl": a.hasXbrl,
+                    "an_dt": a.an_dt,
+                    "exchdisstime": a.exchdisstime,
+                    "dt": a.dt,
+                    "sort_date": a.sort_date,
+                    "difference": a.difference,
+                    "bflag": a.bflag,
+                    "csv_name": a.csvName,
+                    "old_new": a.old_new,
+                    "orgid": a.orgid,
+                }
+            )
+            result.append(
+                ChannelData(
+                    companyName=a.sm_name,
+                    Symbol=a.symbol,
+                    Subject=a.desc,
+                    Detail=a.attchmntText,
+                    attachment=a.attchmntFile,
+                    XBRL=xbrl_url,
+                    event_date_time=a.an_dt,
+                    source="NSE_CORPORATE_ANNOUNCEMENT",
+                    sync_date_time=a.exchdisstime,
+                    sync_status="SUCCESS",
+                    attachment_storage_id=attachment_storage_id,
+                    xbrl_storage_id=xbrl_storage_id,
                 )
-                nsc_announcements.append(
-                    {
-                        "seq_id": a.seq_id,
-                        "symbol": a.symbol,
-                        "sm_name": a.sm_name,
-                        "sm_isin": a.sm_isin,
-                        "sm_industry": a.smIndustry,
-                        "description": a.desc,
-                        "attchmnt_text": a.attchmntText,
-                        "attchmnt_file": a.attchmntFile,
-                        "att_file_size": a.attFileSize,
-                        "file_size": a.fileSize,
-                        "has_xbrl": a.hasXbrl,
-                        "an_dt": a.an_dt,
-                        "exchdisstime": a.exchdisstime,
-                        "dt": a.dt,
-                        "sort_date": a.sort_date,
-                        "difference": a.difference,
-                        "bflag": a.bflag,
-                        "csv_name": a.csvName,
-                        "old_new": a.old_new,
-                        "orgid": a.orgid,
-                    }
-                )
-                result.append(
-                    ChannelData(
-                        companyName=a.sm_name,
-                        Symbol=a.symbol,
-                        Subject=a.desc,
-                        Detail=a.attchmntText,
-                        attachment=a.attchmntFile,
-                        XBRL=xbrl_url,
-                        event_date_time=a.an_dt,
-                        source="NSE_CORPORATE_ANNOUNCEMENT",
-                        sync_date_time=a.exchdisstime,
-                        sync_status="SUCCESS",
-                        attachment_storage_id=attachment_storage_id,
-                        xbrl_storage_id=xbrl_storage_id,
-                    )
-                )
+            )
         self.documents = documents
         self.nsc_announcements = nsc_announcements
         return result

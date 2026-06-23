@@ -150,6 +150,39 @@ class AnnualReportRecord(Base):
     company: Mapped["Company"] = relationship(back_populates="annual_reports")
 
 
+class FinancialResult(Base):
+    __tablename__ = "financial_results"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    seq_number: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    symbol: Mapped[str | None] = mapped_column(String, nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    isin: Mapped[str | None] = mapped_column(String, nullable=True)
+    audited: Mapped[str | None] = mapped_column(String, nullable=True)
+    bank: Mapped[str | None] = mapped_column(String, nullable=True)
+    consolidated: Mapped[str | None] = mapped_column(String, nullable=True)
+    cumulative: Mapped[str | None] = mapped_column(String, nullable=True)
+    period: Mapped[str | None] = mapped_column(String, nullable=True)
+    relating_to: Mapped[str | None] = mapped_column(String, nullable=True)
+    financial_year: Mapped[str | None] = mapped_column(String, nullable=True)
+    from_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    to_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    format: Mapped[str | None] = mapped_column(String, nullable=True)
+    ind_as: Mapped[str | None] = mapped_column(String, nullable=True)
+    industry: Mapped[str | None] = mapped_column(String, nullable=True)
+    old_new_flag: Mapped[str | None] = mapped_column(String, nullable=True)
+    re_ind: Mapped[str | None] = mapped_column(String, nullable=True)
+    params: Mapped[str | None] = mapped_column(String, nullable=True)
+    broadcast_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    filing_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    exchdisstime: Mapped[str | None] = mapped_column(String, nullable=True)
+    difference: Mapped[str | None] = mapped_column(String, nullable=True)
+    result_description: Mapped[str | None] = mapped_column(String, nullable=True)
+    result_detailed_data_link: Mapped[str | None] = mapped_column(String, nullable=True)
+    xbrl: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
+
+
 class NscAnnouncement(Base):
     __tablename__ = "nsc_announcements"
 

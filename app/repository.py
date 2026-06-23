@@ -17,6 +17,7 @@ from app.models import (
     Chunk,
     Company,
     Document,
+    FinancialResult,
     NscAnnouncement,
     UpdateLog,
     User,
@@ -129,5 +130,16 @@ class AnnualReportRecordRepository(BaseRepository[AnnualReportRecord]):
     async def get_by_file_name(self, file_name: str) -> AnnualReportRecord | None:
         result = await self._session.execute(
             select(AnnualReportRecord).where(AnnualReportRecord.file_name == file_name)
+        )
+        return result.scalar_one_or_none()
+
+
+class FinancialResultRepository(BaseRepository[FinancialResult]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session, FinancialResult)
+
+    async def get_by_seq_number(self, seq_number: str) -> FinancialResult | None:
+        result = await self._session.execute(
+            select(FinancialResult).where(FinancialResult.seq_number == seq_number)
         )
         return result.scalar_one_or_none()

@@ -22,6 +22,7 @@ from app.models import (
     Chunk,
     Company,
     Document,
+    FinancialResult,
     NscAnnouncement,
     UpdateLog,
     User,
@@ -34,6 +35,7 @@ from app.repository import (
     ChunkRepository,
     CompanyRepository,
     DocumentRepository,
+    FinancialResultRepository,
     NscAnnouncementRepository,
     UpdateLogRepository,
     UserRepository,
@@ -194,6 +196,20 @@ class AnnualReportRecordService(BaseService[AnnualReportRecord]):
         return await super().create(data)
 
 
+class FinancialResultService(BaseService[FinancialResult]):
+    entity_name = "FinancialResult"
+
+    def __init__(self, session: AsyncSession, repository: FinancialResultRepository) -> None:
+        super().__init__(session, repository)
+
+    async def create(self, data: dict) -> FinancialResult:
+        if data.get("seq_number"):
+            existing = await self._repository.get_by_seq_number(data["seq_number"])
+            if existing is not None:
+                return existing
+        return await super().create(data)
+
+
 class CompanyOnboardService:
     """Pulls a company's full historical record from every NSE data channel."""
 
@@ -233,6 +249,7 @@ class CompanyOnboardService:
             for document_data in getattr(channel, "documents", []):
                 await self._document_service.create(document_data)
             for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
+                print(nsc_announcement_data)
                 await self._nsc_announcement_service.create(nsc_announcement_data)
             for annual_report_data in getattr(channel, "annual_reports", []):
                 await self._annual_report_record_service.create(annual_report_data)

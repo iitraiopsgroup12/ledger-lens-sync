@@ -12,6 +12,7 @@ from app.repository import (
     ChunkRepository,
     CompanyRepository,
     DocumentRepository,
+    FinancialResultRepository,
     NscAnnouncementRepository,
     UpdateLogRepository,
     UserRepository,
@@ -24,6 +25,7 @@ from app.service import (
     CompanyOnboardService,
     CompanyService,
     DocumentService,
+    FinancialResultService,
     NscAnnouncementService,
     UpdateLogService,
     UserService,
@@ -69,6 +71,10 @@ def get_annual_report_record_service(session: SessionDep) -> AnnualReportRecordS
     return AnnualReportRecordService(session, AnnualReportRecordRepository(session))
 
 
+def get_financial_result_service(session: SessionDep) -> FinancialResultService:
+    return FinancialResultService(session, FinancialResultRepository(session))
+
+
 def get_company_onboard_service(
     company_service: Annotated[CompanyService, Depends(get_company_service)],
     document_service: Annotated[DocumentService, Depends(get_document_service)],
@@ -94,4 +100,5 @@ AnalystReportServiceDep = Annotated[AnalystReportService, Depends(get_analyst_re
 UpdateLogServiceDep = Annotated[UpdateLogService, Depends(get_update_log_service)]
 NscAnnouncementServiceDep = Annotated[NscAnnouncementService, Depends(get_nsc_announcement_service)]
 AnnualReportRecordServiceDep = Annotated[AnnualReportRecordService, Depends(get_annual_report_record_service)]
+FinancialResultServiceDep = Annotated[FinancialResultService, Depends(get_financial_result_service)]
 CompanyOnboardServiceDep = Annotated[CompanyOnboardService, Depends(get_company_onboard_service)]

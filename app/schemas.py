@@ -211,6 +211,105 @@ class UpdateLogRead(BaseModel):
     created_at: datetime
 
 
+# --- Financial results -------------------------------------------------------
+
+
+class FinancialResultCreate(BaseModel):
+    """Accepts the raw NSE financial-results JSON via camelCase aliases."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    seq_number: str | None = Field(default=None, alias="seqNumber")
+    symbol: str | None = None
+    company_name: str | None = Field(default=None, alias="companyName")
+    isin: str | None = None
+    audited: str | None = None
+    bank: str | None = None
+    consolidated: str | None = None
+    cumulative: str | None = None
+    period: str | None = None
+    relating_to: str | None = Field(default=None, alias="relatingTo")
+    financial_year: str | None = Field(default=None, alias="financialYear")
+    from_date: str | None = Field(default=None, alias="fromDate")
+    to_date: str | None = Field(default=None, alias="toDate")
+    format: str | None = None
+    ind_as: str | None = Field(default=None, alias="indAs")
+    industry: str | None = None
+    old_new_flag: str | None = Field(default=None, alias="oldNewFlag")
+    re_ind: str | None = Field(default=None, alias="reInd")
+    params: str | None = None
+    broadcast_date: str | None = Field(default=None, alias="broadCastDate")
+    filing_date: str | None = Field(default=None, alias="filingDate")
+    exchdisstime: str | None = None
+    difference: str | None = None
+    result_description: str | None = Field(default=None, alias="resultDescription")
+    result_detailed_data_link: str | None = Field(default=None, alias="resultDetailedDataLink")
+    xbrl: str | None = None
+
+
+class FinancialResultUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str | None = None
+    company_name: str | None = Field(default=None, alias="companyName")
+    isin: str | None = None
+    audited: str | None = None
+    bank: str | None = None
+    consolidated: str | None = None
+    cumulative: str | None = None
+    period: str | None = None
+    relating_to: str | None = Field(default=None, alias="relatingTo")
+    financial_year: str | None = Field(default=None, alias="financialYear")
+    from_date: str | None = Field(default=None, alias="fromDate")
+    to_date: str | None = Field(default=None, alias="toDate")
+    format: str | None = None
+    ind_as: str | None = Field(default=None, alias="indAs")
+    industry: str | None = None
+    old_new_flag: str | None = Field(default=None, alias="oldNewFlag")
+    re_ind: str | None = Field(default=None, alias="reInd")
+    params: str | None = None
+    broadcast_date: str | None = Field(default=None, alias="broadCastDate")
+    filing_date: str | None = Field(default=None, alias="filingDate")
+    exchdisstime: str | None = None
+    difference: str | None = None
+    result_description: str | None = Field(default=None, alias="resultDescription")
+    result_detailed_data_link: str | None = Field(default=None, alias="resultDetailedDataLink")
+    xbrl: str | None = None
+
+
+class FinancialResultRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    seq_number: str | None
+    symbol: str | None
+    company_name: str | None
+    isin: str | None
+    audited: str | None
+    bank: str | None
+    consolidated: str | None
+    cumulative: str | None
+    period: str | None
+    relating_to: str | None
+    financial_year: str | None
+    from_date: str | None
+    to_date: str | None
+    format: str | None
+    ind_as: str | None
+    industry: str | None
+    old_new_flag: str | None
+    re_ind: str | None
+    params: str | None
+    broadcast_date: str | None
+    filing_date: str | None
+    exchdisstime: str | None
+    difference: str | None
+    result_description: str | None
+    result_detailed_data_link: str | None
+    xbrl: str | None
+    created_at: datetime
+
+
 # --- Onboarding --------------------------------------------------------------
 
 

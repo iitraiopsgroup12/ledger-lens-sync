@@ -10,6 +10,7 @@ from app.dependencies import (
     CompanyOnboardServiceDep,
     CompanyServiceDep,
     DocumentServiceDep,
+    FinancialResultServiceDep,
     UpdateLogServiceDep,
     UserServiceDep,
     WatchlistServiceDep,
@@ -28,6 +29,9 @@ from app.schemas import (
     DocumentCreate,
     DocumentRead,
     DocumentUpdate,
+    FinancialResultCreate,
+    FinancialResultRead,
+    FinancialResultUpdate,
     UpdateLogCreate,
     UpdateLogRead,
     UpdateLogUpdate,
@@ -296,6 +300,46 @@ async def delete_update_log(log_id: int, service: UpdateLogServiceDep) -> None:
     await service.delete(log_id)
 
 
+# --- Financial results -------------------------------------------------------
+
+financial_results_router = APIRouter(prefix="/financial-results", tags=["financial-results"])
+
+
+@financial_results_router.post("", response_model=FinancialResultRead, status_code=status.HTTP_201_CREATED)
+async def create_financial_result(
+    payload: FinancialResultCreate, service: FinancialResultServiceDep
+) -> FinancialResultRead:
+    result = await service.create(payload.model_dump(by_alias=False))
+    return FinancialResultRead.model_validate(result)
+
+
+@financial_results_router.get("/{result_id}", response_model=FinancialResultRead)
+async def get_financial_result(result_id: int, service: FinancialResultServiceDep) -> FinancialResultRead:
+    result = await service.get(result_id)
+    return FinancialResultRead.model_validate(result)
+
+
+@financial_results_router.get("", response_model=list[FinancialResultRead])
+async def list_financial_results(
+    service: FinancialResultServiceDep, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500)
+) -> Sequence[FinancialResultRead]:
+    results = await service.list(skip=skip, limit=limit)
+    return [FinancialResultRead.model_validate(r) for r in results]
+
+
+@financial_results_router.patch("/{result_id}", response_model=FinancialResultRead)
+async def update_financial_result(
+    result_id: int, payload: FinancialResultUpdate, service: FinancialResultServiceDep
+) -> FinancialResultRead:
+    result = await service.update(result_id, payload.model_dump(exclude_unset=True, by_alias=False))
+    return FinancialResultRead.model_validate(result)
+
+
+@financial_results_router.delete("/{result_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_financial_result(result_id: int, service: FinancialResultServiceDep) -> None:
+    await service.delete(result_id)
+
+
 # --- Onboarding --------------------------------------------------------------
 
 onboard_router = APIRouter(tags=["onboard"])
@@ -314,5 +358,6 @@ all_routers = (
     chunks_router,
     analyst_reports_router,
     update_logs_router,
+    financial_results_router,
     onboard_router,
 )
