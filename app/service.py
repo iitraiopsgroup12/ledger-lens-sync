@@ -46,6 +46,7 @@ from nse_web_source.announcement import AnnouncementClient
 from nse_web_source.annual_report import AnnualReportClient
 from nse_web_source.common import BASE_URL, create_nse_session
 from nse_web_source.data_channel import ChannelData, DataChannel
+from nse_web_source.financial_results import FinancialResultsClient
 
 SMART_SEARCH_URL = f"{BASE_URL}/api/smart-search/eqEtf"
 
@@ -209,7 +210,6 @@ class FinancialResultService(BaseService[FinancialResult]):
                 return existing
         return await super().create(data)
 
-
 class CompanyOnboardService:
     """Pulls a company's full historical record from every NSE data channel."""
 
@@ -221,6 +221,7 @@ class CompanyOnboardService:
         document_service: DocumentService,
         nsc_announcement_service: NscAnnouncementService,
         annual_report_record_service: AnnualReportRecordService,
+        financial_result_service: FinancialResultService,
         watchlist_service: WatchlistService,
         channels: tuple[DataChannel, ...] | None = None,
     ) -> None:
@@ -228,8 +229,13 @@ class CompanyOnboardService:
         self._document_service = document_service
         self._nsc_announcement_service = nsc_announcement_service
         self._annual_report_record_service = annual_report_record_service
+        self._financial_result_service = financial_result_service
         self._watchlist_service = watchlist_service
-        self._channels = channels or (AnnouncementClient(), AnnualReportClient())
+        self._channels = channels or (
+            FinancialResultsClient(),
+            AnnualReportClient(),
+            #AnnouncementClient(),
+        )
 
     async def on_board(self, company_symbol: str, user_id: int) -> list[ChannelData]:
         company = await self._save_company(company_symbol)
@@ -248,11 +254,12 @@ class CompanyOnboardService:
             result.extend(channel.get_data(company, self.EARLIEST_START_DATE))
             for document_data in getattr(channel, "documents", []):
                 await self._document_service.create(document_data)
-            for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
-                print(nsc_announcement_data)
-                await self._nsc_announcement_service.create(nsc_announcement_data)
-            for annual_report_data in getattr(channel, "annual_reports", []):
-                await self._annual_report_record_service.create(annual_report_data)
+            # for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
+            #     await self._nsc_announcement_service.create(nsc_announcement_data)
+            # for annual_report_data in getattr(channel, "annual_reports", []):
+            #     await self._annual_report_record_service.create(annual_report_data)
+            for financial_result_data in getattr(channel, "financial_results", []):
+                await self._financial_result_service.create(financial_result_data)
         return result
 
     async def _save_company(self, company_symbol: str) -> Company:

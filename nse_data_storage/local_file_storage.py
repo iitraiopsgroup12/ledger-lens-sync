@@ -1,3 +1,5 @@
+import json
+import os
 import uuid
 from pathlib import Path
 from urllib.parse import urlparse
@@ -14,6 +16,9 @@ HEADERS = {
     ),
 }
 
+RAG_API_BASE_URL = os.environ.get("RAG_API_BASE_URL", "http://localhost:8080")
+INGEST_FILE_URL = f"{RAG_API_BASE_URL}/api/v1/ingest/file"
+
 
 class LocalFileStorage(DataStorage):
     """Stores the content fetched from a URL as a file on the local filesystem."""
@@ -22,7 +27,7 @@ class LocalFileStorage(DataStorage):
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
-    def store(self, url: str, bucket: str | None) -> str:
+    def store(self, url: str, bucket: str | None, json_obj: dict | None = None) -> str:
         response = requests.get(url, headers=HEADERS, timeout=30)
         response.raise_for_status()
 
@@ -36,4 +41,13 @@ class LocalFileStorage(DataStorage):
         file_path = target_dir / f"{file_id}{suffix}"
         file_path.write_bytes(response.content)
 
+        self._ingest_file(file_path.name, response.content, json_obj)
+
         return "file://" + file_id
+
+    def _ingest_file(self, filename: str, content: bytes, json_obj: dict | None) -> None:
+        """Forward the downloaded document and its record to the RAG ingest API."""
+        files = [("files", (filename, content, "application/octet-stream"))]
+        data = {"metadata": json.dumps(json_obj)} if json_obj is not None else None
+        response = requests.post(INGEST_FILE_URL, files=files, data=data, timeout=60)
+        response.raise_for_status()

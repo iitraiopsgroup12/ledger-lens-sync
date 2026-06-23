@@ -75,21 +75,7 @@ class AnnualReportClient(DataChannel):
                 continue
             if event_dt < start:
                 continue
-            attachment_storage_id = self.storage.store(r.fileName, company_symbol) if r.fileName else None
-            documents.append(
-                {
-                    "company_id": company.id,
-                    "document_type": "annual_report",
-                    "document_title": f"Annual Report {r.fromYr}-{r.toYr}",
-                    "report_year": f"{r.fromYr}-{r.toYr}",
-                    "s3_key": attachment_storage_id,
-                    "source": "NSE_ANNUAL_REPORT",
-                    "upload_date": datetime.utcnow(),
-                    "processing_status": "completed",
-                }
-            )
-            annual_report_records.append(
-                {
+            jsonObj = {
                     "company_id": company.id,
                     "symbol": company_symbol,
                     "company_name": r.companyName,
@@ -102,7 +88,21 @@ class AnnualReportClient(DataChannel):
                     "file_name": r.fileName,
                     "att_file_size": r.attFileSize,
                 }
+            annual_report_records.append( jsonObj)
+            attachment_storage_id = self.storage.store(r.fileName, company_symbol, jsonObj) if r.fileName else None
+            documents.append(
+                {
+                    "company_id": company.id,
+                    "document_type": "annual_report",
+                    "document_title": f"Annual Report {r.fromYr}-{r.toYr}",
+                    "report_year": f"{r.fromYr}-{r.toYr}",
+                    "s3_key": attachment_storage_id,
+                    "source": "NSE_ANNUAL_REPORT",
+                    "upload_date": datetime.utcnow(),
+                    "processing_status": "completed",
+                }
             )
+
             result.append(
                 ChannelData(
                     companyName=r.companyName,

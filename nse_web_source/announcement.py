@@ -97,22 +97,7 @@ class AnnouncementClient(DataChannel):
             xbrl_url = xbrl_url_by_seq_id.get(a.seq_id)
             attachment_url = a.attchmntFile if a.attchmntFile and a.attchmntFile != "-" else None
             xbrl_url = xbrl_url if xbrl_url and xbrl_url != "-" else None
-            attachment_storage_id = self.storage.store(attachment_url, company.symbol) if attachment_url else None
-            xbrl_storage_id = self.storage.store(xbrl_url, company.symbol) if xbrl_url else None
-            documents.append(
-                {
-                    "company_id": company.id,
-                    "document_type": "announcement",
-                    "document_title": a.desc,
-                    "report_year": a.an_dt,
-                    "s3_key": attachment_storage_id,
-                    "source": "NSE_CORPORATE_ANNOUNCEMENT",
-                    "upload_date": datetime.utcnow(),
-                    "processing_status": "completed",
-                }
-            )
-            nsc_announcements.append(
-                {
+            jsonObj = {
                     "seq_id": a.seq_id,
                     "symbol": a.symbol,
                     "sm_name": a.sm_name,
@@ -134,7 +119,23 @@ class AnnouncementClient(DataChannel):
                     "old_new": a.old_new,
                     "orgid": a.orgid,
                 }
+            nsc_announcements.append(jsonObj)
+
+            attachment_storage_id = self.storage.store(attachment_url, company.symbol, jsonObj) if attachment_url else None
+            xbrl_storage_id = self.storage.store(xbrl_url, company.symbol, jsonObj) if xbrl_url else None
+            documents.append(
+                {
+                    "company_id": company.id,
+                    "document_type": "announcement",
+                    "document_title": a.desc,
+                    "report_year": a.an_dt,
+                    "s3_key": attachment_storage_id,
+                    "source": "NSE_CORPORATE_ANNOUNCEMENT",
+                    "upload_date": datetime.utcnow(),
+                    "processing_status": "completed",
+                }
             )
+
             result.append(
                 ChannelData(
                     companyName=a.sm_name,
