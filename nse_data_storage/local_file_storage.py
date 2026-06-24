@@ -5,10 +5,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+from dotenv import load_dotenv
 
 from .storage import DataStorage
 
-DEFAULT_STORAGE_DIR = Path("storage")
+load_dotenv()
+
+DEFAULT_STORAGE_DIR = Path(os.environ.get("STORAGE_DIR", "storage"))
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -41,9 +44,24 @@ class LocalFileStorage(DataStorage):
         file_path = target_dir / f"{file_id}{suffix}"
         file_path.write_bytes(response.content)
 
-        self._ingest_file(file_path.name, response.content, json_obj)
+        #self._ingest_file(file_path.name, response.content, json_obj)
 
         return "file://" + file_id
+
+    def retrieve(self, storage_id: str, bucket: str | None = None) -> bytes:
+        file_id = storage_id.removeprefix("file://")
+
+        target_dir = self.storage_dir
+        if bucket is not None:
+            target_dir = target_dir / bucket
+
+        matches = list(target_dir.glob(f"{file_id}.*")) + list(target_dir.glob(file_id))
+        if not matches:
+            raise FileNotFoundError(
+                f"No stored content for storage id {storage_id!r} in bucket {bucket!r}"
+            )
+
+        return matches[0].read_bytes()
 
     def _ingest_file(self, filename: str, content: bytes, json_obj: dict | None) -> None:
         """Forward the downloaded document and its record to the RAG ingest API."""

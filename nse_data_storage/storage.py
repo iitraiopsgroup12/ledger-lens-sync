@@ -12,3 +12,12 @@ class DataStorage(ABC):
         implementations may use it as metadata for the stored content.
         """
         ...
+
+    @abstractmethod
+    def retrieve(self, storage_id: str, bucket: str | None = None) -> bytes:
+        """Fetch the previously stored content for storage_id within bucket.
+
+        storage_id is the value returned by store; bucket identifies the
+        same location store wrote to. Returns the raw file content.
+        """
+        ...

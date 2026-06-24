@@ -232,8 +232,11 @@ class CompanyOnboardService:
         self._financial_result_service = financial_result_service
         self._watchlist_service = watchlist_service
         self._channels = channels or (
-            FinancialResultsClient(),
             AnnualReportClient(),
+            FinancialResultsClient('Quarterly'),
+            #FinancialResultsClient('Half Yearly'),
+            FinancialResultsClient('Annual'),
+            FinancialResultsClient('Others'),
             #AnnouncementClient(),
         )
 
@@ -256,8 +259,8 @@ class CompanyOnboardService:
                 await self._document_service.create(document_data)
             # for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
             #     await self._nsc_announcement_service.create(nsc_announcement_data)
-            # for annual_report_data in getattr(channel, "annual_reports", []):
-            #     await self._annual_report_record_service.create(annual_report_data)
+            for annual_report_data in getattr(channel, "annual_reports", []):
+                await self._annual_report_record_service.create(annual_report_data)
             for financial_result_data in getattr(channel, "financial_results", []):
                 await self._financial_result_service.create(financial_result_data)
         return result
