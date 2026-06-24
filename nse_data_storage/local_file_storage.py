@@ -44,7 +44,7 @@ class LocalFileStorage(DataStorage):
         file_path = target_dir / f"{file_id}{suffix}"
         file_path.write_bytes(response.content)
 
-        #self._ingest_file(file_path.name, response.content, json_obj)
+        self._ingest_file(file_path.name, response.content, json_obj)
 
         return "file://" + file_id
 
