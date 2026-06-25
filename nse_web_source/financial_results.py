@@ -51,22 +51,22 @@ class FinancialResult:
 class FinancialResultsClient(DataChannel):
     """Client for the NSE India corporates-financial-results API."""
 
-    def __init__(self):
+    def __init__(self, period):
         self.session = create_nse_session()
         self.storage = LocalFileStorage()
+        self.documents: list[dict] = []
         self.financial_results: list[dict] = []
-
+        self.period = period
     def fetch_financial_results(
         self,
         symbol: str,
         issuer: Optional[str] = None,
-        index: str = "equities",
-        period: str = "Quarterly",
+        index: str = "equities"
     ) -> list[FinancialResult]:
         params = {
             "index": index,
             "symbol": symbol,
-            "period": period,
+            "period": self.period,
         }
         if issuer:
             params["issuer"] = issuer
@@ -91,70 +91,72 @@ class FinancialResultsClient(DataChannel):
         documents = []
         financial_result_records = []
         for r in financial_results:
-            try:
-                event_dt = datetime.strptime(r.broadCastDate, BROADCAST_DATE_FORMAT)
-            except (TypeError, ValueError):
-                continue
-            if event_dt < start:
-                continue
-            xbrl_url = r.xbrl if r.xbrl and not r.xbrl.endswith("/-") else None
-            jsonObj = {
-                    "seq_number": r.seqNumber,
-                    "symbol": r.symbol,
-                    "company_name": r.companyName,
-                    "isin": r.isin,
-                    "audited": r.audited,
-                    "bank": r.bank,
-                    "consolidated": r.consolidated,
-                    "cumulative": r.cumulative,
-                    "period": r.period,
-                    "relating_to": r.relatingTo,
-                    "financial_year": r.financialYear,
-                    "from_date": r.fromDate,
-                    "to_date": r.toDate,
-                    "format": r.format,
-                    "ind_as": r.indAs,
-                    "industry": r.industry,
-                    "old_new_flag": r.oldNewFlag,
-                    "re_ind": r.reInd,
-                    "params": r.params,
-                    "broadcast_date": r.broadCastDate,
-                    "filing_date": r.filingDate,
-                    "exchdisstime": r.exchdisstime,
-                    "difference": r.difference,
-                    "result_description": r.resultDescription,
-                    "result_detailed_data_link": r.resultDetailedDataLink,
-                    "xbrl": r.xbrl,
-                }
-            financial_result_records.append(jsonObj)
-            xbrl_storage_id = self.storage.store(xbrl_url, company_symbol, jsonObj) if xbrl_url else None
-            documents.append(
-                {
-                    "company_id": company.id,
-                    "document_type": "quarterly_report",
-                    "document_title":r.relatingTo,
-                    "report_year": r.financialYear,
-                    "s3_key": xbrl_storage_id,
-                    "source": "NSE_CORPORATE_ANNOUNCEMENT",
-                    "upload_date": datetime.utcnow(),
-                    "processing_status": "completed",
-                }
-            )
-            result.append(
-                ChannelData(
-                    companyName=r.companyName,
-                    Symbol=r.symbol,
-                    Subject=f"Financial Results {r.relatingTo} {r.financialYear}",
-                    Detail=f"{r.consolidated} / {r.audited}",
-                    attachment=None,
-                    XBRL=xbrl_url,
-                    event_date_time=r.broadCastDate,
-                    source="NSE_FINANCIAL_RESULT",
-                    sync_date_time=r.exchdisstime,
-                    sync_status="SUCCESS",
-                    attachment_storage_id=None,
-                    xbrl_storage_id=xbrl_storage_id,
+            if r.xbrl.endswith((".xml",".pdf")):
+                try:
+                    event_dt = datetime.strptime(r.broadCastDate, BROADCAST_DATE_FORMAT)
+                except (TypeError, ValueError):
+                    continue
+                if event_dt < start:
+                    continue
+                xbrl_url = r.xbrl if r.xbrl and not r.xbrl.endswith("/-") else None
+                jsonObj = {
+                        "seq_number": r.seqNumber,
+                        "symbol": r.symbol,
+                        "company_name": r.companyName,
+                        "isin": r.isin,
+                        "audited": r.audited,
+                        "bank": r.bank,
+                        "consolidated": r.consolidated,
+                        "cumulative": r.cumulative,
+                        "period": r.period,
+                        "relating_to": r.relatingTo,
+                        "financial_year": r.financialYear,
+                        "from_date": r.fromDate,
+                        "to_date": r.toDate,
+                        "format": r.format,
+                        "ind_as": r.indAs,
+                        "industry": r.industry,
+                        "old_new_flag": r.oldNewFlag,
+                        "re_ind": r.reInd,
+                        "params": r.params,
+                        "broadcast_date": r.broadCastDate,
+                        "filing_date": r.filingDate,
+                        "exchdisstime": r.exchdisstime,
+                        "difference": r.difference,
+                        "result_description": r.resultDescription,
+                        "result_detailed_data_link": r.resultDetailedDataLink,
+                        "xbrl": r.xbrl,
+                    }
+                financial_result_records.append(jsonObj)
+                xbrl_storage_id = self.storage.store(xbrl_url, company_symbol, jsonObj) if xbrl_url else None
+                documents.append(
+                    {
+                        "company_id": company.id,
+                        "document_type": self.period,
+                        "document_title":r.relatingTo,
+                        "report_year": r.financialYear,
+                        "s3_key": xbrl_storage_id,
+                        "source": "NSE_CORPORATE_ANNOUNCEMENT",
+                        "upload_date": datetime.utcnow(),
+                        "processing_status": "completed",
+                    }
                 )
-            )
+                result.append(
+                    ChannelData(
+                        companyName=r.companyName,
+                        Symbol=r.symbol,
+                        Subject=f"Financial Results {r.relatingTo} {r.financialYear}",
+                        Detail=f"{r.consolidated} / {r.audited}",
+                        attachment=None,
+                        XBRL=xbrl_url,
+                        event_date_time=r.broadCastDate,
+                        source="NSE_FINANCIAL_RESULT",
+                        sync_date_time=r.exchdisstime,
+                        sync_status="SUCCESS",
+                        attachment_storage_id=None,
+                        xbrl_storage_id=xbrl_storage_id,
+                    )
+                )
+        self.documents = documents
         self.financial_results = financial_result_records
         return result

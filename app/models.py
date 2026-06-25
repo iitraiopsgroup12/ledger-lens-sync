@@ -60,15 +60,6 @@ class Watchlist(Base):
 
 class Document(Base):
     __tablename__ = "documents"
-    __table_args__ = (
-        CheckConstraint(
-            "document_type IN ('annual_report', 'announcement', 'other')", name="ck_documents_type"
-        ),
-        CheckConstraint(
-            "processing_status IN ('pending', 'processing', 'completed', 'failed')",
-            name="ck_documents_processing_status",
-        ),
-    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
