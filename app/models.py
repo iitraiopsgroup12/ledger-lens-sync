@@ -66,6 +66,7 @@ class Document(Base):
     document_type: Mapped[str | None] = mapped_column(String, nullable=True)
     document_title: Mapped[str | None] = mapped_column(String, nullable=True)
     report_year: Mapped[str | None] = mapped_column(String, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String, nullable=True)
     s3_key: Mapped[str | None] = mapped_column(String, nullable=True)
     source: Mapped[str | None] = mapped_column(String, nullable=True)
     upload_date: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
@@ -178,6 +179,7 @@ class IntegratedResult(Base):
     __tablename__ = "integrated_results"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
     seq_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     symbol: Mapped[str | None] = mapped_column(String, nullable=True)
     cm_name: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -205,6 +207,7 @@ class NscAnnouncement(Base):
     __tablename__ = "nsc_announcements"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    company_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), nullable=True)
     seq_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
     symbol: Mapped[str | None] = mapped_column(String, nullable=True)
     sm_name: Mapped[str | None] = mapped_column(String, nullable=True)

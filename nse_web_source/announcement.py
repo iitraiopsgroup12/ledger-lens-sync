@@ -7,7 +7,7 @@ import pandas as pd
 from app.models import Company
 from nse_data_storage import LocalFileStorage
 
-from .common import BASE_URL, create_nse_session
+from .common import BASE_URL, create_nse_session, extract_file_name
 from .data_channel import ChannelData, DataChannel
 
 ANNOUNCEMENTS_URL = f"{BASE_URL}/api/corporate-announcements"
@@ -98,6 +98,7 @@ class AnnouncementClient(DataChannel):
             attachment_url = a.attchmntFile if a.attchmntFile and a.attchmntFile != "-" else None
             xbrl_url = xbrl_url if xbrl_url and xbrl_url != "-" else None
             jsonObj = {
+                    "company_id": company.id,
                     "seq_id": a.seq_id,
                     "symbol": a.symbol,
                     "sm_name": a.sm_name,
@@ -129,6 +130,7 @@ class AnnouncementClient(DataChannel):
                     "document_type": "announcement",
                     "document_title": a.desc,
                     "report_year": a.an_dt,
+                    "file_name": extract_file_name(xbrl_url),
                     "s3_key": attachment_storage_id,
                     "source": "NSE_CORPORATE_ANNOUNCEMENT",
                     "upload_date": datetime.utcnow(),

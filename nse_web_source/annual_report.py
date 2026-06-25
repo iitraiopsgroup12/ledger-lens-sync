@@ -7,7 +7,7 @@ import pandas as pd
 from app.models import Company
 from nse_data_storage import LocalFileStorage
 
-from .common import BASE_URL, create_nse_session
+from .common import BASE_URL, create_nse_session, extract_file_name
 from .data_channel import ChannelData, DataChannel
 
 ANNUAL_REPORTS_URL = f"{BASE_URL}/api/annual-reports"
@@ -96,6 +96,7 @@ class AnnualReportClient(DataChannel):
                     "document_type": "annual_report",
                     "document_title": f"Annual Report {r.fromYr}-{r.toYr}",
                     "report_year": f"{r.fromYr}-{r.toYr}",
+                    "file_name": extract_file_name(r.fileName),
                     "s3_key": attachment_storage_id,
                     "source": "NSE_ANNUAL_REPORT",
                     "upload_date": datetime.utcnow(),

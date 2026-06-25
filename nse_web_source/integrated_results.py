@@ -7,7 +7,7 @@ import pandas as pd
 from app.models import Company
 from nse_data_storage import LocalFileStorage
 
-from .common import BASE_URL, create_nse_session
+from .common import BASE_URL, create_nse_session, extract_file_name
 from .data_channel import ChannelData, DataChannel
 
 INTEGRATED_RESULTS_URL = f"{BASE_URL}/api/integrated-filing-results"
@@ -100,8 +100,9 @@ class IntegratedResultsClient(DataChannel):
                 continue
             if event_dt < start:
                 continue
-            xbrl_url = r.xbrl if r.xbrl and not r.xbrl.endswith("/null") else None
+            xbrl_url = r.xbrl if r.xbrl and r.xbrl.endswith(".xml") else None
             jsonObj = {
+                    "company_id": company.id,
                     "seq_id": r.seq_Id,
                     "symbol": r.symbol,
                     "cm_name": r.cmName,
@@ -131,6 +132,7 @@ class IntegratedResultsClient(DataChannel):
                     "document_type": "other",
                     "document_title": f"{r.type} {r.qe_Date}",
                     "report_year": r.qe_Date,
+                    "file_name": extract_file_name(xbrl_url),
                     "s3_key": xbrl_storage_id,
                     "source": "NSE_INTEGRATED_FILING",
                     "upload_date": datetime.utcnow(),

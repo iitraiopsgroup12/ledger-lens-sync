@@ -35,6 +35,7 @@ CREATE TABLE documents (
     document_type TEXT CHECK (document_type IN ('annual_report', 'announcement', 'other')),
     document_title TEXT,
     report_year TEXT,
+    file_name TEXT,
     s3_key TEXT,
     source TEXT,
     upload_date TIMESTAMP DEFAULT NOW(),
@@ -89,6 +90,7 @@ CREATE TABLE annual_reports (
 -- 9. Integrated Filing Results Table
 CREATE TABLE integrated_results (
     id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
     seq_id TEXT UNIQUE,
     symbol TEXT,
     cm_name TEXT,
@@ -115,6 +117,7 @@ CREATE TABLE integrated_results (
 -- 10. NSE Corporate Announcements Table
 CREATE TABLE nsc_announcements (
     id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT REFERENCES companies(id) ON DELETE CASCADE,
     seq_id TEXT UNIQUE,
     symbol TEXT,
     sm_name TEXT,

@@ -104,6 +104,7 @@ class DocumentCreate(BaseModel):
     document_type: DocumentType
     document_title: str | None = None
     report_year: str | None = None
+    file_name: str | None = None
     s3_key: str | None = None
     source: str | None = None
     processing_status: ProcessingStatus = "pending"
@@ -113,6 +114,7 @@ class DocumentUpdate(BaseModel):
     document_type: DocumentType | None = None
     document_title: str | None = None
     report_year: str | None = None
+    file_name: str | None = None
     s3_key: str | None = None
     source: str | None = None
     processing_status: ProcessingStatus | None = None
@@ -126,6 +128,7 @@ class DocumentRead(BaseModel):
     document_type: str
     document_title: str | None
     report_year: str | None
+    file_name: str | None
     s3_key: str | None
     source: str | None
     upload_date: datetime
