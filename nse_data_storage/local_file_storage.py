@@ -31,22 +31,25 @@ class LocalFileStorage(DataStorage):
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
     def store(self, url: str, bucket: str | None, json_obj: dict | None = None) -> str:
-        response = requests.get(url, headers=HEADERS, timeout=30)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
 
-        target_dir = self.storage_dir
-        if bucket is not None:
-            target_dir = target_dir / bucket
-            target_dir.mkdir(parents=True, exist_ok=True)
+            target_dir = self.storage_dir
+            if bucket is not None:
+                target_dir = target_dir / bucket
+                target_dir.mkdir(parents=True, exist_ok=True)
 
-        file_id = uuid.uuid4().hex
-        suffix = Path(urlparse(url).path).suffix
-        file_path = target_dir / f"{file_id}{suffix}"
-        file_path.write_bytes(response.content)
+            file_id = uuid.uuid4().hex
+            suffix = Path(urlparse(url).path).suffix
+            file_path = target_dir / f"{file_id}{suffix}"
+            file_path.write_bytes(response.content)
 
-        self._ingest_file(file_path.name, response.content, json_obj)
+            #self._ingest_file(file_path.name, response.content, json_obj)
 
-        return "file://" + file_id
+            return "file://" + file_id
+        except:
+            return "FILE_NOT_FOUND"
 
     def retrieve(self, storage_id: str, bucket: str | None = None) -> bytes:
         file_id = storage_id.removeprefix("file://")

@@ -23,6 +23,7 @@ from app.models import (
     Company,
     Document,
     FinancialResult,
+    IntegratedResult,
     NscAnnouncement,
     UpdateLog,
     User,
@@ -36,6 +37,7 @@ from app.repository import (
     CompanyRepository,
     DocumentRepository,
     FinancialResultRepository,
+    IntegratedResultRepository,
     NscAnnouncementRepository,
     UpdateLogRepository,
     UserRepository,
@@ -47,6 +49,7 @@ from nse_web_source.annual_report import AnnualReportClient
 from nse_web_source.common import BASE_URL, create_nse_session
 from nse_web_source.data_channel import ChannelData, DataChannel
 from nse_web_source.financial_results import FinancialResultsClient
+from nse_web_source.integrated_results import IntegratedResultsClient
 
 SMART_SEARCH_URL = f"{BASE_URL}/api/smart-search/eqEtf"
 
@@ -210,6 +213,20 @@ class FinancialResultService(BaseService[FinancialResult]):
                 return existing
         return await super().create(data)
 
+class IntegratedResultService(BaseService[IntegratedResult]):
+    entity_name = "IntegratedResult"
+
+    def __init__(self, session: AsyncSession, repository: IntegratedResultRepository) -> None:
+        super().__init__(session, repository)
+
+    async def create(self, data: dict) -> IntegratedResult:
+        if data.get("seq_id"):
+            existing = await self._repository.get_by_seq_id(data["seq_id"])
+            if existing is not None:
+                return existing
+        return await super().create(data)
+
+
 class CompanyOnboardService:
     """Pulls a company's full historical record from every NSE data channel."""
 
@@ -222,6 +239,7 @@ class CompanyOnboardService:
         nsc_announcement_service: NscAnnouncementService,
         annual_report_record_service: AnnualReportRecordService,
         financial_result_service: FinancialResultService,
+        integrated_result_service: IntegratedResultService,
         watchlist_service: WatchlistService,
         channels: tuple[DataChannel, ...] | None = None,
     ) -> None:
@@ -230,14 +248,13 @@ class CompanyOnboardService:
         self._nsc_announcement_service = nsc_announcement_service
         self._annual_report_record_service = annual_report_record_service
         self._financial_result_service = financial_result_service
+        self._integrated_result_service = integrated_result_service
         self._watchlist_service = watchlist_service
         self._channels = channels or (
+            #FinancialResultsClient(),
             AnnualReportClient(),
-            FinancialResultsClient('Quarterly'),
-            #FinancialResultsClient('Half Yearly'),
-            FinancialResultsClient('Annual'),
-            FinancialResultsClient('Others'),
-            #AnnouncementClient(),
+            IntegratedResultsClient(),
+            AnnouncementClient()
         )
 
     async def on_board(self, company_symbol: str, user_id: int) -> list[ChannelData]:
@@ -254,15 +271,20 @@ class CompanyOnboardService:
 
         result: list[ChannelData] = []
         for channel in self._channels:
-            result.extend(channel.get_data(company, self.EARLIEST_START_DATE))
-            for document_data in getattr(channel, "documents", []):
-                await self._document_service.create(document_data)
-            # for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
-            #     await self._nsc_announcement_service.create(nsc_announcement_data)
-            for annual_report_data in getattr(channel, "annual_reports", []):
-                await self._annual_report_record_service.create(annual_report_data)
-            for financial_result_data in getattr(channel, "financial_results", []):
-                await self._financial_result_service.create(financial_result_data)
+            try:
+                result.extend(channel.get_data(company, self.EARLIEST_START_DATE))
+                for document_data in getattr(channel, "documents", []):
+                    await self._document_service.create(document_data)
+                for annual_report_data in getattr(channel, "annual_reports", []):
+                    await self._annual_report_record_service.create(annual_report_data)
+                for integrated_result_data in getattr(channel, "integrated_results", []):
+                    await self._integrated_result_service.create(integrated_result_data)
+                for nsc_announcement_data in getattr(channel, "nsc_announcements", []):
+                    await self._nsc_announcement_service.create(nsc_announcement_data)
+                # for financial_result_data in getattr(channel, "financial_results", []):
+                #     await self._financial_result_service.create(financial_result_data)
+            except:
+                print("Exception while fetching data")
         return result
 
     async def _save_company(self, company_symbol: str) -> Company:

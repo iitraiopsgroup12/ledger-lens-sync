@@ -18,6 +18,7 @@ from app.models import (
     Company,
     Document,
     FinancialResult,
+    IntegratedResult,
     NscAnnouncement,
     UpdateLog,
     User,
@@ -141,5 +142,16 @@ class FinancialResultRepository(BaseRepository[FinancialResult]):
     async def get_by_seq_number(self, seq_number: str) -> FinancialResult | None:
         result = await self._session.execute(
             select(FinancialResult).where(FinancialResult.seq_number == seq_number)
+        )
+        return result.scalar_one_or_none()
+
+
+class IntegratedResultRepository(BaseRepository[IntegratedResult]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session, IntegratedResult)
+
+    async def get_by_seq_id(self, seq_id: str) -> IntegratedResult | None:
+        result = await self._session.execute(
+            select(IntegratedResult).where(IntegratedResult.seq_id == seq_id)
         )
         return result.scalar_one_or_none()
