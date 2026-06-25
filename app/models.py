@@ -174,6 +174,33 @@ class FinancialResult(Base):
     created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
 
 
+class IntegratedResult(Base):
+    __tablename__ = "integrated_results"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    seq_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    symbol: Mapped[str | None] = mapped_column(String, nullable=True)
+    cm_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    sm_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    audited: Mapped[str | None] = mapped_column(String, nullable=True)
+    consolidated: Mapped[str | None] = mapped_column(String, nullable=True)
+    type: Mapped[str | None] = mapped_column(String, nullable=True)
+    type_sub: Mapped[str | None] = mapped_column(String, nullable=True)
+    qe_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    broadcast_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    creation_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    revised_date: Mapped[str | None] = mapped_column(String, nullable=True)
+    revision_remark: Mapped[str | None] = mapped_column(String, nullable=True)
+    diff: Mapped[str | None] = mapped_column(String, nullable=True)
+    ixbrl: Mapped[str | None] = mapped_column(String, nullable=True)
+    ixbrl_file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    xbrl: Mapped[str | None] = mapped_column(String, nullable=True)
+    xbrl_file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    pdf_attach: Mapped[str | None] = mapped_column(String, nullable=True)
+    att_file_size: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, nullable=True)
+
+
 class NscAnnouncement(Base):
     __tablename__ = "nsc_announcements"
 

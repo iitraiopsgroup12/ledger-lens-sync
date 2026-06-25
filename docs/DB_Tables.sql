@@ -86,7 +86,33 @@ CREATE TABLE annual_reports (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 9. NSE Corporate Announcements Table
+-- 9. Integrated Filing Results Table
+CREATE TABLE integrated_results (
+    id BIGSERIAL PRIMARY KEY,
+    seq_id TEXT UNIQUE,
+    symbol TEXT,
+    cm_name TEXT,
+    sm_name TEXT,
+    audited TEXT,
+    consolidated TEXT,
+    type TEXT,
+    type_sub TEXT,
+    qe_date TEXT,
+    broadcast_date TEXT,
+    creation_date TEXT,
+    revised_date TEXT,
+    revision_remark TEXT,
+    diff TEXT,
+    ixbrl TEXT,
+    ixbrl_file_size TEXT,
+    xbrl TEXT,
+    xbrl_file_size TEXT,
+    pdf_attach TEXT,
+    att_file_size TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 10. NSE Corporate Announcements Table
 CREATE TABLE nsc_announcements (
     id BIGSERIAL PRIMARY KEY,
     seq_id TEXT UNIQUE,
