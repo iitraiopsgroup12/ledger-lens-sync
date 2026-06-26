@@ -1,8 +1,10 @@
 """API layer: FastAPI routers exposing full CRUD for every entity."""
 
 from collections.abc import Sequence
+from datetime import date
+from pathlib import Path
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
 from app.dependencies import (
     AnalystReportServiceDep,
@@ -16,7 +18,7 @@ from app.dependencies import (
     WatchlistServiceDep,
 )
 from app.schemas import (
-    AnalystReportCreate,
+    AnalystReportListResponse,
     AnalystReportRead,
     AnalystReportUpdate,
     ChannelDataRead,
@@ -37,6 +39,7 @@ from app.schemas import (
     UpdateLogUpdate,
     UserCreate,
     UserRead,
+    UserReadWithPasswordHash,
     UserUpdate,
     WatchlistCreate,
     WatchlistRead,
@@ -57,6 +60,12 @@ async def create_user(payload: UserCreate, service: UserServiceDep) -> UserRead:
 async def get_user(user_id: int, service: UserServiceDep) -> UserRead:
     user = await service.get(user_id)
     return UserRead.model_validate(user)
+
+
+@users_router.get("/email/{email_address}", response_model=UserReadWithPasswordHash)
+async def get_user_by_email(email_address: str, service: UserServiceDep) -> UserReadWithPasswordHash:
+    user = await service.get_by_email(email_address)
+    return UserReadWithPasswordHash.model_validate(user)
 
 
 @users_router.get("", response_model=list[UserRead])
@@ -228,12 +237,36 @@ async def delete_chunk(chunk_id: int, service: ChunkServiceDep) -> None:
 
 analyst_reports_router = APIRouter(prefix="/analyst-reports", tags=["analyst-reports"])
 
+ALLOWED_ANALYST_REPORT_EXTENSIONS = {".pdf", ".docx", ".doc", ".xml", ".json"}
+
 
 @analyst_reports_router.post("", response_model=AnalystReportRead, status_code=status.HTTP_201_CREATED)
 async def create_analyst_report(
-    payload: AnalystReportCreate, service: AnalystReportServiceDep
+    service: AnalystReportServiceDep,
+    company_symbol: str = Form(...),
+    file: UploadFile = File(...),
+    broker_name: str | None = Form(None),
+    report_date: date | None = Form(None),
+    sentiment_score: float | None = Form(None),
 ) -> AnalystReportRead:
-    report = await service.create(payload.model_dump())
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in ALLOWED_ANALYST_REPORT_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Unsupported file type '{suffix or file.filename}'. "
+                f"Allowed: {', '.join(sorted(ALLOWED_ANALYST_REPORT_EXTENSIONS))}"
+            ),
+        )
+    content = await file.read()
+    report = await service.create_from_upload(
+        company_symbol=company_symbol,
+        file_name=file.filename or f"upload{suffix}",
+        file_content=content,
+        broker_name=broker_name,
+        report_date=report_date,
+        sentiment_score=sentiment_score,
+    )
     return AnalystReportRead.model_validate(report)
 
 
@@ -243,12 +276,15 @@ async def get_analyst_report(report_id: int, service: AnalystReportServiceDep) -
     return AnalystReportRead.model_validate(report)
 
 
-@analyst_reports_router.get("", response_model=list[AnalystReportRead])
+@analyst_reports_router.get("", response_model=AnalystReportListResponse)
 async def list_analyst_reports(
-    service: AnalystReportServiceDep, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500)
-) -> Sequence[AnalystReportRead]:
-    reports = await service.list(skip=skip, limit=limit)
-    return [AnalystReportRead.model_validate(r) for r in reports]
+    company_symbol: str, service: AnalystReportServiceDep
+) -> AnalystReportListResponse:
+    reports, documents = await service.list_by_company_symbol(company_symbol)
+    return AnalystReportListResponse(
+        analyst_reports=[AnalystReportRead.model_validate(r) for r in reports],
+        documents=[DocumentRead.model_validate(d) for d in documents],
+    )
 
 
 @analyst_reports_router.patch("/{report_id}", response_model=AnalystReportRead)

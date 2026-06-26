@@ -8,7 +8,7 @@ to read schemas.
 
 import os
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import date, datetime
 from typing import Generic, TypeVar
 
 from sqlalchemy import select
@@ -44,6 +44,7 @@ from app.repository import (
     WatchlistRepository,
 )
 from app.security import hash_password
+from nse_data_storage import LocalFileStorage
 from nse_web_source.announcement import AnnouncementClient
 from nse_web_source.annual_report import AnnualReportClient
 from nse_web_source.common import BASE_URL, create_nse_session
@@ -121,6 +122,12 @@ class UserService(BaseService[User]):
             data["password_hash"] = hash_password(password)
         return await super().update(entity_id, data)
 
+    async def get_by_email(self, email: str) -> User:
+        user = await self._repository.get_by_email(email)
+        if user is None:
+            raise NotFoundError(self.entity_name, email)
+        return user
+
 
 class CompanyService(BaseService[Company]):
     entity_name = "Company"
@@ -162,8 +169,72 @@ class ChunkService(BaseService[Chunk]):
 class AnalystReportService(BaseService[AnalystReport]):
     entity_name = "AnalystReport"
 
-    def __init__(self, session: AsyncSession, repository: AnalystReportRepository) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        repository: AnalystReportRepository,
+        company_repository: CompanyRepository,
+        document_repository: DocumentRepository,
+        storage: LocalFileStorage,
+    ) -> None:
         super().__init__(session, repository)
+        self._company_repository = company_repository
+        self._document_repository = document_repository
+        self._storage = storage
+
+    async def create_from_upload(
+        self,
+        company_symbol: str,
+        file_name: str,
+        file_content: bytes,
+        broker_name: str | None = None,
+        report_date: date | None = None,
+        sentiment_score: float | None = None,
+    ) -> AnalystReport:
+        """Resolve the company, store the uploaded file, and persist the report
+        plus a matching document record in a single transaction."""
+        company = await self._company_repository.get_by_symbol(company_symbol)
+        if company is None:
+            raise NotFoundError("Company", company_symbol)
+
+        storage_id = self._storage.store_bytes(file_content, file_name, bucket=company_symbol)
+
+        try:
+            report = await self._repository.create(
+                {
+                    "company_id": company.id,
+                    "broker_name": broker_name,
+                    "report_date": report_date,
+                    "s3_key": storage_id,
+                    "sentiment_score": sentiment_score,
+                }
+            )
+            document_data = {
+                "company_id": company.id,
+                "document_type": "analyst_report",
+                "document_title": "Analyst Report",
+                "report_year": str(report_date) if report_date is not None else None,
+                "file_name": file_name,
+                "source": "UPLOAD",
+                "s3_key": storage_id,
+            }
+            await self._document_repository.create(document_data)
+            await self._session.commit()
+        except IntegrityError as exc:
+            await self._session.rollback()
+            raise ConflictError(f"{self.entity_name} violates a uniqueness or foreign-key constraint") from exc
+        return report
+
+    async def list_by_company_symbol(
+        self, company_symbol: str
+    ) -> tuple[Sequence[AnalystReport], Sequence[Document]]:
+        """Resolve the company by symbol and return its analyst reports and documents."""
+        company = await self._company_repository.get_by_symbol(company_symbol)
+        if company is None:
+            raise NotFoundError("Company", company_symbol)
+        reports = await self._repository.get_by_company_id(company.id)
+        documents = await self._document_repository.get_analyst_reports_by_company_id(company.id)
+        return reports, documents
 
 
 class UpdateLogService(BaseService[UpdateLog]):

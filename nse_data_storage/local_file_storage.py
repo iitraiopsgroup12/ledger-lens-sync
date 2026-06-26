@@ -51,6 +51,20 @@ class LocalFileStorage(DataStorage):
         except:
             return "FILE_NOT_FOUND"
 
+    def store_bytes(self, content: bytes, file_name: str, bucket: str | None = None) -> str:
+        """Persist already-loaded bytes (e.g. an uploaded file) and return its storage id."""
+        target_dir = self.storage_dir
+        if bucket is not None:
+            target_dir = target_dir / bucket
+            target_dir.mkdir(parents=True, exist_ok=True)
+
+        file_id = uuid.uuid4().hex
+        suffix = Path(file_name).suffix
+        file_path = target_dir / f"{file_id}{suffix}"
+        file_path.write_bytes(content)
+
+        return "file://" + file_id
+
     def retrieve(self, storage_id: str, bucket: str | None = None) -> bytes:
         file_id = storage_id.removeprefix("file://")
 

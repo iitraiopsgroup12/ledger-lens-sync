@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
+from nse_data_storage import LocalFileStorage
 from app.repository import (
     AnalystReportRepository,
     AnnualReportRecordRepository,
@@ -58,7 +59,13 @@ def get_chunk_service(session: SessionDep) -> ChunkService:
 
 
 def get_analyst_report_service(session: SessionDep) -> AnalystReportService:
-    return AnalystReportService(session, AnalystReportRepository(session))
+    return AnalystReportService(
+        session,
+        AnalystReportRepository(session),
+        CompanyRepository(session),
+        DocumentRepository(session),
+        LocalFileStorage(),
+    )
 
 
 def get_update_log_service(session: SessionDep) -> UpdateLogService:

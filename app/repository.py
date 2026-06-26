@@ -80,6 +80,10 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, User)
 
+    async def get_by_email(self, email: str) -> User | None:
+        result = await self._session.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
 
 class CompanyRepository(BaseRepository[Company]):
     def __init__(self, session: AsyncSession) -> None:
@@ -99,6 +103,15 @@ class DocumentRepository(BaseRepository[Document]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Document)
 
+    async def get_analyst_reports_by_company_id(self, company_id: int) -> Sequence[Document]:
+        result = await self._session.execute(
+            select(Document).where(
+                Document.company_id == company_id,
+                Document.document_type == "analyst_report",
+            )
+        )
+        return result.scalars().all()
+
 
 class ChunkRepository(BaseRepository[Chunk]):
     def __init__(self, session: AsyncSession) -> None:
@@ -108,6 +121,12 @@ class ChunkRepository(BaseRepository[Chunk]):
 class AnalystReportRepository(BaseRepository[AnalystReport]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, AnalystReport)
+
+    async def get_by_company_id(self, company_id: int) -> Sequence[AnalystReport]:
+        result = await self._session.execute(
+            select(AnalystReport).where(AnalystReport.company_id == company_id)
+        )
+        return result.scalars().all()
 
 
 class UpdateLogRepository(BaseRepository[UpdateLog]):

@@ -41,6 +41,10 @@ class UserRead(BaseModel):
     created_at: datetime
 
 
+class UserReadWithPasswordHash(UserRead):
+    password_hash: str
+
+
 # --- Companies -----------------------------------------------------------
 
 
@@ -162,10 +166,9 @@ class ChunkRead(BaseModel):
 
 
 class AnalystReportCreate(BaseModel):
-    company_id: int
+    company_symbol: str
     broker_name: str | None = None
     report_date: date | None = None
-    s3_key: str | None = None
     sentiment_score: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
@@ -185,6 +188,13 @@ class AnalystReportRead(BaseModel):
     report_date: date | None
     s3_key: str | None
     sentiment_score: float | None
+
+
+class AnalystReportListResponse(BaseModel):
+    """Analyst reports plus document records for a single company."""
+
+    analyst_reports: list[AnalystReportRead]
+    documents: list[DocumentRead]
 
 
 # --- Update logs -----------------------------------------------------------
