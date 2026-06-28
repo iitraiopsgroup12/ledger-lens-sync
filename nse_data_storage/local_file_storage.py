@@ -1,6 +1,8 @@
 import json
+import logging
 import os
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -10,6 +12,8 @@ from dotenv import load_dotenv
 from .storage import DataStorage
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_STORAGE_DIR = Path(os.environ.get("STORAGE_DIR", "storage"))
 HEADERS = {
@@ -29,8 +33,17 @@ class LocalFileStorage(DataStorage):
     def __init__(self, storage_dir: Path | str = DEFAULT_STORAGE_DIR):
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self._ingest_executor = ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="ingest"
+        )
 
-    def store(self, url: str, bucket: str | None, json_obj: dict | None = None) -> str:
+    def store(
+        self,
+        url: str,
+        bucket: str | None,
+        json_obj: dict | None = None,
+        embeddingRequired: bool = False,
+    ) -> str:
         try:
             response = requests.get(url, headers=HEADERS, timeout=30)
             response.raise_for_status()
@@ -45,7 +58,10 @@ class LocalFileStorage(DataStorage):
             file_path = target_dir / f"{file_id}{suffix}"
             file_path.write_bytes(response.content)
 
-            #self._ingest_file(file_path.name, response.content, json_obj)
+            if embeddingRequired:
+                self._ingest_executor.submit(
+                    self._ingest_file, file_path.name, response.content, json_obj
+                )
 
             return "file://" + file_id
         except:
@@ -81,8 +97,15 @@ class LocalFileStorage(DataStorage):
         return matches[0].read_bytes()
 
     def _ingest_file(self, filename: str, content: bytes, json_obj: dict | None) -> None:
-        """Forward the downloaded document and its record to the RAG ingest API."""
-        files = [("files", (filename, content, "application/octet-stream"))]
-        data = {"metadata": json.dumps(json_obj)} if json_obj is not None else None
-        response = requests.post(INGEST_FILE_URL, files=files, data=data, timeout=60)
-        response.raise_for_status()
+        """Forward the downloaded document and its record to the RAG ingest API.
+
+        Runs on a background thread, so it logs failures instead of propagating
+        them (the future is never awaited).
+        """
+        try:
+            files = [("files", (filename, content, "application/octet-stream"))]
+            data = {"metadata": json.dumps(json_obj)} if json_obj is not None else None
+            response = requests.post(INGEST_FILE_URL, files=files, data=data, timeout=60000)
+            response.raise_for_status()
+        except Exception:
+            logger.exception("Failed to ingest file %s into RAG API", filename)

@@ -101,6 +101,7 @@ class IntegratedResultsClient(DataChannel):
             if event_dt < start:
                 continue
             xbrl_url = r.xbrl if r.xbrl and r.xbrl.endswith(".xml") else None
+            ixbrl_url = r.ixbrl if r.ixbrl and r.ixbrl.endswith(".html") else None
             jsonObj = {
                     "company_id": company.id,
                     "seq_id": r.seq_Id,
@@ -125,7 +126,8 @@ class IntegratedResultsClient(DataChannel):
                     "att_file_size": r.attFileSize,
                 }
             integrated_result_records.append(jsonObj)
-            xbrl_storage_id = self.storage.store(xbrl_url, company_symbol, jsonObj) if xbrl_url else None
+            ##xbrl_storage_id = self.storage.store(xbrl_url, company_symbol, jsonObj) if xbrl_url else None
+            ixbrl_storage_id = self.storage.store(ixbrl_url, company_symbol, jsonObj,True) if ixbrl_url else None
             documents.append(
                 {
                     "company_id": company.id,
@@ -133,7 +135,7 @@ class IntegratedResultsClient(DataChannel):
                     "document_title": f"{r.type} {r.qe_Date}",
                     "report_year": r.qe_Date,
                     "file_name": extract_file_name(xbrl_url),
-                    "s3_key": xbrl_storage_id,
+                    "s3_key": ixbrl_storage_id,
                     "source": "NSE_INTEGRATED_FILING",
                     "upload_date": datetime.utcnow(),
                     "processing_status": "completed",
@@ -152,7 +154,7 @@ class IntegratedResultsClient(DataChannel):
                     sync_date_time=r.creation_Date,
                     sync_status="SUCCESS",
                     attachment_storage_id=None,
-                    xbrl_storage_id=xbrl_storage_id,
+                    xbrl_storage_id=ixbrl_storage_id,
                 )
             )
         self.documents = documents

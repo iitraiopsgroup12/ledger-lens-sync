@@ -1,0 +1,152 @@
+%%{init: {'theme':'base', 'themeVariables': {'fontSize':'16px'}, 'flowchart': {'curve':'basis', 'nodeSpacing':40, 'rankSpacing':70}}}%%
+flowchart TB
+    classDef ep fill:#1f6feb,stroke:#0b3d91,color:#fff,rx:6,ry:6;
+    classDef svc fill:#2ea043,stroke:#176b2c,color:#fff,rx:6,ry:6;
+    classDef repo fill:#bf8700,stroke:#7a5600,color:#fff,rx:6,ry:6;
+    classDef db fill:#6e40c9,stroke:#3f2483,color:#fff,rx:6,ry:6;
+    classDef ext fill:#cf222e,stroke:#86101a,color:#fff,rx:6,ry:6;
+    classDef store fill:#0b7285,stroke:#074853,color:#fff,rx:6,ry:6;
+
+    Client([HTTP Client]):::ep
+
+    subgraph REST["REST Endpoints (FastAPI routers)"]
+        direction LR
+        E1["/users"]:::ep
+        E2["/companies"]:::ep
+        E3["/watchlists"]:::ep
+        E4["/documents"]:::ep
+        E5["/chunks"]:::ep
+        E6["/analyst-reports"]:::ep
+        E7["/update-logs"]:::ep
+        E8["/financial-results"]:::ep
+        E9["/onboard"]:::ep
+    end
+
+    subgraph SVC["Service Layer (business rules + tx boundary)"]
+        direction LR
+        S1[UserService]:::svc
+        S2[CompanyService]:::svc
+        S3[WatchlistService]:::svc
+        S4[DocumentService]:::svc
+        S5[ChunkService]:::svc
+        S6[AnalystReportService]:::svc
+        S7[UpdateLogService]:::svc
+        S8[FinancialResultService]:::svc
+        S9[CompanyOnboardService]:::svc
+        S10[NscAnnouncementService]:::svc
+        S11[AnnualReportRecordService]:::svc
+        S12[IntegratedResultService]:::svc
+    end
+
+    subgraph REPO["Repository Layer (data access)"]
+        direction LR
+        R1[UserRepository]:::repo
+        R2[CompanyRepository]:::repo
+        R3[WatchlistRepository]:::repo
+        R4[DocumentRepository]:::repo
+        R5[ChunkRepository]:::repo
+        R6[AnalystReportRepository]:::repo
+        R7[UpdateLogRepository]:::repo
+        R8[FinancialResultRepository]:::repo
+        R9[NscAnnouncementRepository]:::repo
+        R10[AnnualReportRecordRepository]:::repo
+        R11[IntegratedResultRepository]:::repo
+    end
+
+    subgraph DB["PostgreSQL (SQLAlchemy ORM tables)"]
+        direction LR
+        T1[(users)]:::db
+        T2[(companies)]:::db
+        T3[(watchlists)]:::db
+        T4[(documents)]:::db
+        T5[(chunks)]:::db
+        T6[(analyst_reports)]:::db
+        T7[(update_logs)]:::db
+        T8[(financial_results)]:::db
+        T9[(nsc_announcements)]:::db
+        T10[(annual_reports)]:::db
+        T11[(integrated_results)]:::db
+    end
+
+    subgraph WEB["NSE Web Source (DataChannel clients)"]
+        direction TB
+        W1[AnnouncementClient]:::ext
+        W2[AnnualReportClient]:::ext
+        W3[IntegratedResultsClient]:::ext
+        W4[FinancialResultsClient]:::ext
+        NSE[(NSE India APIs<br/>announcements / annual-reports<br/>integrated-results / smart-search)]:::ext
+    end
+
+    subgraph STORE["Storage Service (DataStorage)"]
+        direction TB
+        ST1[LocalFileStorage]:::store
+        ST2[AwsFileStorage]:::store
+        FS[(Local FS / AWS S3<br/>file bytes)]:::store
+    end
+
+    Client --> REST
+
+    %% Endpoint -> Service
+    E1 --> S1
+    E2 --> S2
+    E3 --> S3
+    E4 --> S4
+    E5 --> S5
+    E6 --> S6
+    E7 --> S7
+    E8 --> S8
+    E9 --> S9
+
+    %% Service -> Repository
+    S1 --> R1
+    S2 --> R2
+    S3 --> R3
+    S4 --> R4
+    S5 --> R5
+    S6 --> R6
+    S6 --> R2
+    S6 --> R4
+    S7 --> R7
+    S8 --> R8
+    S10 --> R9
+    S11 --> R10
+    S12 --> R11
+
+    %% Onboard orchestrates multiple services
+    S9 --> S2
+    S9 --> S3
+    S9 --> S4
+    S9 --> S10
+    S9 --> S11
+    S9 --> S12
+
+    %% Repository -> DB table
+    R1 --> T1
+    R2 --> T2
+    R3 --> T3
+    R4 --> T4
+    R5 --> T5
+    R6 --> T6
+    R7 --> T7
+    R8 --> T8
+    R9 --> T9
+    R10 --> T10
+    R11 --> T11
+
+    %% Storage usage
+    S6 -- store_bytes(upload) --> ST1
+    W1 -- store(url) --> ST1
+    W2 -- store(url) --> ST1
+    ST1 --> FS
+    ST2 -. alt impl .-> FS
+
+    %% Web source usage
+    S9 -- get_data(company) --> W1
+    S9 --> W2
+    S9 --> W3
+    S9 --> W4
+    S9 -- smart-search lookup --> NSE
+    W1 --> NSE
+    W2 --> NSE
+    W3 --> NSE
+    W4 --> NSE

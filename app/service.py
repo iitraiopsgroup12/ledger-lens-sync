@@ -322,7 +322,7 @@ class CompanyOnboardService:
         self._integrated_result_service = integrated_result_service
         self._watchlist_service = watchlist_service
         self._channels = channels or (
-            #FinancialResultsClient(),
+            # FinancialResultsClient(),
             AnnualReportClient(),
             IntegratedResultsClient(),
             AnnouncementClient()
