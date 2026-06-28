@@ -1,0 +1,206 @@
+<mxfile host="app.diagrams.net" agent="Claude Code">
+  <diagram name="Ledger Lens Sync - Architecture" id="ledger-lens-sync-arch">
+    <mxGraphModel dx="1664" dy="914" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=20;fontColor=#1A1A1A;" value="Ledger Lens Sync — Service Architecture (FastAPI · Layered · NSE Data Sync + RAG Ingestion)" vertex="1">
+          <mxGeometry height="40" width="2120" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_nse" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="NSE India&#xa;(www.nseindia.com)&#xa;Smart-Search · Announcements&#xa;Annual Reports · Results" vertex="1">
+          <mxGeometry height="90" width="200" x="2125" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_rag" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontStyle=1;" value="RAG Service (External)&#xa;POST /api/v1/ingest/file&#xa;RAG_API_BASE_URL&#xa;(default http://localhost:8080)" vertex="1">
+          <mxGeometry height="100" width="200" x="1925" y="1130" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_s3" parent="1" style="shape=mxgraph.aws4.bucket;sketch=0;html=1;fillColor=#E05243;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;fontColor=#232F3E;fontSize=11;" value="Amazon S3&#xa;(object storage)" vertex="1">
+          <mxGeometry height="78" width="78" x="2630" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="lyr_router" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=12;spacingTop=8;" value="① REST API Layer — app/router.py  (FastAPI APIRouters)" vertex="1">
+          <mxGeometry height="230" width="1480" x="200" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="r_users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/users&#xa;POST · GET/{id} · GET&#xa;GET /email/{email}&#xa;PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="220" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_companies" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/companies&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="410" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_watch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/watchlists&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="600" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_docs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/documents&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="790" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunks" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/chunks&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="980" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_reports" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;align=left;spacingLeft=6;" value="/analyst-reports&#xa;POST (multipart upload)&#xa;GET/{id} · GET?symbol&#xa;PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="1170" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_logs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/update-logs&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="160" x="1360" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="r_fin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="/financial-results&#xa;POST · GET/{id}&#xa;GET · PATCH · DELETE" vertex="1">
+          <mxGeometry height="80" width="170" x="220" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="r_onboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;fontStyle=1;" value="GET /onboard&#xa;?symbol&amp;amp;user_id&#xa;→ pulls full NSE history" vertex="1">
+          <mxGeometry height="80" width="180" x="410" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="r_health" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;align=left;spacingLeft=6;" value="GET /health&#xa;(liveness/readiness probe)" vertex="1">
+          <mxGeometry height="80" width="170" x="610" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="r_di" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=13;align=left;spacingLeft=6;" value="app/dependencies.py&#xa;FastAPI Depends() wiring&#xa;Repository → Service per request&#xa;app/schemas.py = Pydantic I/O models" vertex="1">
+          <mxGeometry height="80" width="360" x="980" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="lyr_service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontSize=14;align=left;spacingLeft=12;spacingTop=8;" value="② Service Layer — app/service.py  (business rules · transaction boundary · domain exceptions)" vertex="1">
+          <mxGeometry height="240" width="1480" x="200" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="s_base" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;fontStyle=2;align=left;spacingLeft=6;" value="BaseService[Model]&#xa;get · list · create&#xa;update · delete&#xa;commit / rollback" vertex="1">
+          <mxGeometry height="90" width="150" x="220" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_user" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="UserService&#xa;(unique email,&#xa;bcrypt hash)" vertex="1">
+          <mxGeometry height="60" width="130" x="390" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_company" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="CompanyService&#xa;(unique symbol)" vertex="1">
+          <mxGeometry height="60" width="130" x="540" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_watch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="WatchlistService" vertex="1">
+          <mxGeometry height="60" width="130" x="690" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_doc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="DocumentService" vertex="1">
+          <mxGeometry height="60" width="130" x="840" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_chunk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="ChunkService" vertex="1">
+          <mxGeometry height="60" width="130" x="990" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_report" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;align=left;spacingLeft=6;fontStyle=1;" value="AnalystReportService&#xa;create_from_upload()&#xa;→ stores file + document" vertex="1">
+          <mxGeometry height="60" width="170" x="1140" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_log" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="UpdateLogService" vertex="1">
+          <mxGeometry height="60" width="150" x="1330" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="s_nsc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="NscAnnouncementService" vertex="1">
+          <mxGeometry height="50" width="170" x="390" y="675" as="geometry" />
+        </mxCell>
+        <mxCell id="s_annual" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="AnnualReportRecordService" vertex="1">
+          <mxGeometry height="50" width="180" x="575" y="675" as="geometry" />
+        </mxCell>
+        <mxCell id="s_finres" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="FinancialResultService" vertex="1">
+          <mxGeometry height="50" width="160" x="770" y="675" as="geometry" />
+        </mxCell>
+        <mxCell id="s_intres" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;" value="IntegratedResultService" vertex="1">
+          <mxGeometry height="50" width="165" x="945" y="675" as="geometry" />
+        </mxCell>
+        <mxCell id="s_onboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;align=left;spacingLeft=6;fontStyle=1;" value="CompanyOnboardService&#xa;on_board(symbol, user_id)&#xa;orchestrates company + watchlist +&#xa;NSE channels → persists records" vertex="1">
+          <mxGeometry height="64" width="355" x="1125" y="668" as="geometry" />
+        </mxCell>
+        <mxCell id="lyr_repo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontStyle=1;fontSize=14;align=left;spacingLeft=12;spacingTop=8;" value="③ Repository Layer — app/repository.py  (pure data access · flush only · no commit)" vertex="1">
+          <mxGeometry height="150" width="1480" x="200" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="repo_base" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;fontStyle=2;align=left;spacingLeft=6;" value="BaseRepository[Model]&#xa;create · get_by_id · get_all&#xa;update · delete (SQLAlchemy)" vertex="1">
+          <mxGeometry height="90" width="190" x="220" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="repo_list" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=11;align=left;spacingLeft=8;verticalAlign=middle;" value="UserRepository · CompanyRepository · WatchlistRepository · DocumentRepository · ChunkRepository&#xa;AnalystReportRepository · UpdateLogRepository · NscAnnouncementRepository&#xa;AnnualReportRecordRepository · FinancialResultRepository · IntegratedResultRepository&#xa;(+ custom finders: get_by_email · get_by_symbol · get_by_seq_id · get_by_file_name …)" vertex="1">
+          <mxGeometry height="90" width="1050" x="430" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="PostgreSQL&#xa;(asyncpg · SQLAlchemy 2.0 async ORM)&#xa;app/database.py · app/models.py&#xa;Tables: users · companies · watchlists · documents&#xa;chunks · analyst_reports · update_logs&#xa;financial_results · integrated_results · nsc_announcements · annual_reports" vertex="1">
+          <mxGeometry height="170" width="600" x="640" y="1070" as="geometry" />
+        </mxCell>
+        <mxCell id="lyr_pkg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=12;spacingTop=8;" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; ④ Internal / External Packages" vertex="1">
+          <mxGeometry height="490" width="640" x="1690" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_web" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=8;spacingTop=6;" value="nse_web_source  (NSE scraping / API clients)" vertex="1">
+          <mxGeometry height="190" width="600" x="1720" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="web_channel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=2;align=left;spacingLeft=6;" value="DataChannel (ABC)&#xa;get_data(company, start_date)&#xa;→ list[ChannelData]" vertex="1">
+          <mxGeometry height="80" width="180" x="1735" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="web_ann" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;" value="AnnouncementClient" vertex="1">
+          <mxGeometry height="36" width="180" x="1935" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="web_annual" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;" value="AnnualReportClient" vertex="1">
+          <mxGeometry height="36" width="180" x="1935" y="684" as="geometry" />
+        </mxCell>
+        <mxCell id="web_intres" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;" value="IntegratedResultsClient" vertex="1">
+          <mxGeometry height="36" width="180" x="2125" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="web_finres" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;" value="FinancialResultsClient" vertex="1">
+          <mxGeometry height="36" width="180" x="2125" y="684" as="geometry" />
+        </mxCell>
+        <mxCell id="web_common" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=13;align=left;spacingLeft=6;" value="common.py → create_nse_session() (requests + cookies, HEADERS)  ·  data_channel.py → ChannelData (dataclass)" vertex="1">
+          <mxGeometry height="44" width="570" x="1735" y="732" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_store" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=8;spacingTop=6;" value="nse_data_storage  (file storage abstraction + RAG ingest)" vertex="1">
+          <mxGeometry height="220" width="600" x="1720" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="store_abc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=2;align=left;spacingLeft=6;" value="DataStorage (ABC)&#xa;store(url, bucket, json_obj)&#xa;retrieve(storage_id)" vertex="1">
+          <mxGeometry height="80" width="180" x="1735" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="store_local" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;align=left;spacingLeft=6;" value="LocalFileStorage&#xa;store / store_bytes / retrieve&#xa;ThreadPoolExecutor (async ingest)&#xa;STORAGE_DIR" vertex="1">
+          <mxGeometry height="80" width="185" x="1935" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="store_aws" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=13;align=left;spacingLeft=6;" value="AwsFileStorage&#xa;boto3 put_object / get_object&#xa;AWS_S3_BUCKET / REGION / PREFIX" vertex="1">
+          <mxGeometry height="80" width="175" x="2130" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="store_ingest" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;fontStyle=1;align=left;spacingLeft=6;" value="⑤ _ingest_file(filename, content, metadata)  →  POST {RAG_API_BASE_URL}/api/v1/ingest/file&#xa;(triggered when embeddingRequired=True; runs on background thread, logs failures)" vertex="1">
+          <mxGeometry height="64" width="570" x="1735" y="945" as="geometry" />
+        </mxCell>
+        <mxCell id="tech" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;align=left;fontSize=12;spacingLeft=12;spacingTop=8;fontStyle=0;" value="⑥ Tools &amp; Technologies&#xa;&#xa;• Language: Python 3.14&#xa;• Web framework: FastAPI 0.137 + Uvicorn (standard)&#xa;• Validation/Serialization: Pydantic v2 (email)&#xa;• ORM / DB: SQLAlchemy 2.0 (async) + asyncpg + PostgreSQL&#xa;• Auth: bcrypt (password hashing)&#xa;• HTTP client: requests  ·  Data: pandas&#xa;• Cloud storage: boto3 / Amazon S3&#xa;• Config: python-dotenv (.env)&#xa;• Local file storage + ThreadPoolExecutor&#xa;• RAG ingestion API (external microservice)&#xa;• Packaging/deploy: Docker · Helm chart · Kubernetes (HPA, Ingress/HTTPRoute, PVC)&#xa;• Dependency mgmt: uv (uv.lock) / requirements.txt&#xa;• External data source: NSE India" vertex="1">
+          <mxGeometry height="350" width="560" x="40" y="1070" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="Hv3MeV0gwLLL2gZ6kT4w-1" style="endArrow=block;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="lyr_router">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="171.28742514970065" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="lyr_router" style="endArrow=block;html=1;strokeColor=#82b366;strokeWidth=2;" target="lyr_service">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="940" y="525" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2b" edge="1" parent="1" source="r_di" style="endArrow=none;dashed=1;html=1;strokeColor=#999999;fontSize=9;" target="lyr_service" value="Depends() injects Service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="lyr_service" style="endArrow=block;html=1;strokeColor=#9673a6;strokeWidth=2;" target="lyr_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="lyr_repo" style="endArrow=block;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="s_onboard" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=2;" target="pkg_web" value="get_data() per channel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="s_company" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=1;dashed=1;" target="ext_nse" value="smart-search (requests)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="pkg_web" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=2;" target="ext_nse" value="fetch docs / XBRL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="pkg_web" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=13;" target="pkg_store" value="store(url, embeddingRequired)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="s_report" style="endArrow=block;html=1;strokeColor=#d6b656;strokeWidth=2;" target="pkg_store" value="store_bytes(upload)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="store_ingest" style="endArrow=block;html=1;strokeColor=#b85450;strokeWidth=2;" target="ext_rag" value="multipart POST">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1740" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="store_aws" style="endArrow=block;html=1;strokeColor=#E05243;strokeWidth=2;" target="ext_s3" value="put / get object">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1859" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="lyr_service" style="endArrow=open;html=1;strokeColor=#999999;strokeWidth=1;dashed=1;" target="pkg_store" value="uses (Depends)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1500" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Hv3MeV0gwLLL2gZ6kT4w-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="API" vertex="1">
+          <mxGeometry height="60" width="120" x="210" y="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
