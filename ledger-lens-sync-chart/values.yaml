@@ -16,13 +16,52 @@ image:
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "2.0"
+  tag: "1.4"
+
+# Application configuration, surfaced to the container as environment variables.
+# Non-sensitive values are rendered into a ConfigMap; sensitive values into a
+# Secret. Both are wired into the Deployment via envFrom. These mirror the
+# project's .env file.
+env:
+  # Non-sensitive settings (rendered into a ConfigMap).
+  config:
+    POSTGRES_HOST: "10.88.0.2"
+    POSTGRES_PORT: "5432"
+    POSTGRES_USER: "postgres"
+    POSTGRES_DB: "iitr-db-test"
+    EARLIEST_START_DATE: "01-01-2025"
+    # Base URL of the external RAG service that ingests stored files.
+    RAG_API_BASE_URL: "http://ledger-lens-rag.iitr-test.svc.cluster.local:8080"
+    # Logging verbosity: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+    LOG_LEVEL: "DEBUG"
+    # Comma-separated list of allowed CORS origins ("*" allows any origin).
+    # Credentialed requests are only enabled when explicit origins are listed.
+    CORS_ALLOW_ORIGINS: "*"
+    # Local file storage (LocalFileStorage).
+    STORAGE_DIR: "/home/storage"
+    # AWS S3 storage (AwsFileStorage).
+    AWS_S3_BUCKET: "ledger-lens-documents"
+    AWS_REGION: "ap-south-1"
+    AWS_S3_PREFIX: "nse"
+    # Only set for S3-compatible stores (MinIO/LocalStack); leave blank for real AWS.
+    AWS_S3_ENDPOINT_URL: ""
+  # Sensitive settings (rendered into a Secret). Override these at install time
+  # (e.g. --set-string env.secrets.POSTGRES_PASSWORD=...) or supply via an
+  # external secret manager. Leave AWS credentials blank to use the default AWS
+  # credential chain (instance role, shared profile, etc.).
+  secrets:
+    POSTGRES_PASSWORD: "root"
+    AWS_ACCESS_KEY_ID: ""
+    AWS_SECRET_ACCESS_KEY: ""
+    AWS_SESSION_TOKEN: ""
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
 # This is to override the chart name.
 nameOverride: ""
-fullnameOverride: ""
+# Pin the name used for all generated resources. Set so resources are named
+# "ledger-lens-sync" rather than "<release>-ledger-lens-sync-chart".
+fullnameOverride: "ledger-lens-sync"
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
@@ -61,6 +100,7 @@ service:
   type: NodePort
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 8000
+  nodePort: 32000
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -119,11 +159,13 @@ httpRoute:
 
 resources:
   limits:
-    cpu: 250m
-    memory: 256Mi
+    # /onboard does NSE fetch + processing + RAG ingest, which OOMKilled the
+    # container at 256Mi. Raised to 1Gi (cpu bumped alongside to avoid throttling).
+    cpu: 500m
+    memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 250m
+    memory: 512Mi
 
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 # /health has no database dependency, so it's safe for both probes.
@@ -144,17 +186,35 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# Persists the SQLite database file (written to /app/data in the container)
-# across pod restarts via a PersistentVolumeClaim. Leave disabled for
-# ephemeral/dev use; enable for any deployment where data should survive
-# a pod reschedule. Since this is backed by a single ReadWriteOnce volume,
-# it only works with replicaCount: 1.
+# Backs STORAGE_DIR (/home/storage in the container) with a persistent volume
+# so downloaded files survive pod restarts. Leave disabled for ephemeral/dev
+# use. Since this is backed by a single ReadWriteOnce volume, it only works
+# with replicaCount: 1.
 persistence:
-  enabled: false
+  enabled: true
+  # Backing volume type:
+  #   "pvc"      - a dynamically provisioned PersistentVolumeClaim (default,
+  #                portable across clusters).
+  #   "hostPath" - a directory on the Kubernetes node's filesystem. Use this on
+  #                a local single-node cluster (Docker Desktop / Rancher Desktop
+  #                on Windows) when you want files to land on the Windows host.
+  type: pvc
   size: 1Gi
   storageClassName: ""
   accessModes:
     - ReadWriteOnce
+  # Only used when type is "hostPath". This is a path *on the Kubernetes node*,
+  # not on your workstation directly. On this kind+podman cluster the Windows
+  # directory D:\Workspace\STORAGE is bind-mounted into the node at /storage via
+  # the cluster's kind config (nodes[].extraMounts). The chain is:
+  #   D:\Workspace\STORAGE  ->  /mnt/d/Workspace/STORAGE (podman VM)
+  #                         ->  /storage (kind node, this path)
+  #                         ->  /home/storage (container, via volumeMount)
+  # If you recreate the cluster with a different containerPath, update this.
+  hostPath:
+    path: /storage
+    # DirectoryOrCreate makes the kubelet create the directory if it is missing.
+    type: DirectoryOrCreate
 
 # Additional volumes on the output Deployment definition.
 volumes: []

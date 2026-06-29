@@ -31,14 +31,19 @@ COPY --from=builder /app/app /app/app
 COPY --from=builder /app/nse_data_storage /app/nse_data_storage
 COPY --from=builder /app/nse_web_source /app/nse_web_source
 COPY --from=builder /app/main.py /app/main.py
+COPY --chmod=755 docker-entrypoint.sh /app/docker-entrypoint.sh
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 
-RUN mkdir -p /app/data /app/storage && chown -R app:app /app/data /app/storage
+RUN mkdir -p /home/data /home/storage \
+    && chown -R app:app /home/data /home/storage \
+    && chmod -R 777 /home/data /home/storage
 
 USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Entrypoint script uses `exec` so uvicorn becomes PID 1 and receives signals
+# (SIGTERM on pod shutdown) directly for a graceful shutdown.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

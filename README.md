@@ -93,9 +93,9 @@ docker run -p 8000:8000 ledger-lens-sync:latest
 ```
 
 The container runs as a non-root user and serves the app with `uvicorn`
-on port 8000. The SQLite file is written to `/app/data/ledger_lens.db`
+on port 8000. The SQLite file is written to `/home/data/ledger_lens.db`
 inside the container — for Kubernetes, back this with a `PersistentVolumeClaim`
-mounted at `/app/data` if data needs to survive pod restarts, or treat the
+mounted at `/home/data` if data needs to survive pod restarts, or treat the
 deployment as ephemeral/single-replica if not. Since SQLite has no
 built-in concurrent-writer support across pods, do not scale this
 deployment beyond a single replica without first switching to a

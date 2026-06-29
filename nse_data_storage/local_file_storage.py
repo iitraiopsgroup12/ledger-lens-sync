@@ -8,12 +8,38 @@ from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from .storage import DataStorage
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+
+def _build_session() -> requests.Session:
+    """Session with connection pooling and automatic retries.
+
+    Retries dropped connections ("Remote end closed connection without
+    response") and 5xx responses with exponential backoff, so a transient
+    server-side disconnect no longer fails the whole ingest.
+    """
+    session = requests.Session()
+    retry = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        status=5,
+        backoff_factor=2,  # 0s, 2s, 4s, 8s, 16s between attempts
+        status_forcelist=(500, 502, 503, 504),
+        allowed_methods=frozenset({"POST", "GET"}),
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=10, pool_maxsize=10)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 DEFAULT_STORAGE_DIR = Path(os.environ.get("STORAGE_DIR", "storage"))
 HEADERS = {
@@ -25,6 +51,11 @@ HEADERS = {
 
 RAG_API_BASE_URL = os.environ.get("RAG_API_BASE_URL", "http://localhost:8080")
 INGEST_FILE_URL = f"{RAG_API_BASE_URL}/api/v1/ingest/file"
+
+# (connect timeout, read timeout) in seconds.
+INGEST_TIMEOUT = (10, 300)
+
+_session = _build_session()
 
 
 class LocalFileStorage(DataStorage):
@@ -105,7 +136,9 @@ class LocalFileStorage(DataStorage):
         try:
             files = [("files", (filename, content, "application/octet-stream"))]
             data = {"metadata": json.dumps(json_obj)} if json_obj is not None else None
-            response = requests.post(INGEST_FILE_URL, files=files, data=data, timeout=60000)
+            response = _session.post(
+                INGEST_FILE_URL, files=files, data=data, timeout=INGEST_TIMEOUT
+            )
             response.raise_for_status()
         except Exception:
             logger.exception("Failed to ingest file %s into RAG API", filename)

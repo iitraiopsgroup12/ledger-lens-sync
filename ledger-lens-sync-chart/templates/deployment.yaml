@@ -44,6 +44,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            {{- if .Values.env.config }}
+            - configMapRef:
+                name: {{ include "ledger-lens-sync-chart.fullname" . }}-config
+            {{- end }}
+            {{- if .Values.env.secrets }}
+            - secretRef:
+                name: {{ include "ledger-lens-sync-chart.fullname" . }}-secret
+            {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -60,7 +69,7 @@ spec:
           volumeMounts:
             {{- if .Values.persistence.enabled }}
             - name: data
-              mountPath: /app/data
+              mountPath: /home/storage
             {{- end }}
             {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -70,8 +79,14 @@ spec:
       volumes:
         {{- if .Values.persistence.enabled }}
         - name: data
+          {{- if eq .Values.persistence.type "hostPath" }}
+          hostPath:
+            path: {{ .Values.persistence.hostPath.path | quote }}
+            type: {{ .Values.persistence.hostPath.type | default "DirectoryOrCreate" }}
+          {{- else }}
           persistentVolumeClaim:
             claimName: {{ include "ledger-lens-sync-chart.fullname" . }}-data
+          {{- end }}
         {{- end }}
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}

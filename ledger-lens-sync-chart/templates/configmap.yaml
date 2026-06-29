@@ -1,0 +1,12 @@
+{{- with .Values.env.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ledger-lens-sync-chart.fullname" $ }}-config
+  labels:
+    {{- include "ledger-lens-sync-chart.labels" $ | nindent 4 }}
+data:
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}

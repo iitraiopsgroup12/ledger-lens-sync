@@ -1,0 +1,47 @@
+# kind cluster config for the local ledger-lens dev environment (podman provider).
+#
+# Reproduces the original single-node topology and adds bind mounts so the
+# services' persistent data lands on the Windows host:
+#   - STORAGE_DIR        -> D:\Workspace\STORAGE     (sync + rag KPI documents)
+#   - FAISS_INDEX_PATH   -> D:\Workspace\VECTTOR-DB  (rag FAISS index)
+#
+# Path chain for the storage mount:
+#   D:\Workspace\STORAGE  ->  /mnt/d/Workspace/STORAGE  (podman machine / WSL VM)
+#                         ->  /storage                  (this node, containerPath)
+#                         ->  /home/storage             (sync + rag volumeMount)
+#
+# Path chain for the rag FAISS index mount:
+#   D:\Workspace\VECTTOR-DB  ->  /mnt/d/Workspace/VECTTOR-DB  (podman machine / WSL VM)
+#                            ->  /vector-db                   (this node, containerPath)
+#                            ->  /data/faiss_index            (rag volumeMount)
+#
+# Recreate with:
+#   kind delete cluster --name kind-cluster
+#   kind create cluster --name kind-cluster --config kind-cluster.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: kind-cluster
+nodes:
+  - role: control-plane
+    # Forwards Windows-host ports to the node so Contour's envoy DaemonSet
+    # (hostPort 80/443) is reachable from Windows on 9090/9443, as before.
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 9090
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 9443
+        protocol: TCP
+    # Bind-mounts the Windows STORAGE directory into the node at /storage.
+    # Use the Windows drive path (D:/...): podman translates it to
+    # /mnt/d/Workspace/STORAGE inside its VM. Do NOT use the /mnt/d/... form
+    # here -- kind re-normalizes it and ends up with a doubled /mnt/d/mnt/d/...
+    # path that does not exist. The sync chart's persistence.hostPath.path
+    # must match this containerPath (/storage).
+    extraMounts:
+      - hostPath: D:/Workspace/STORAGE
+        containerPath: /storage
+      # Rag FAISS index. Matches the rag chart's persistence.hostPath.path
+      # (/vector-db). Backs D:\Workspace\VECTTOR-DB on the Windows host.
+      - hostPath: D:/Workspace/VECTTOR-DB
+        containerPath: /vector-db
